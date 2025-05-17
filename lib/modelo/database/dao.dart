@@ -46,6 +46,8 @@ class Dao {
         id_categoria INTEGER NOT NULL,
         numero_paginas INTEGER NOT NULL,
         id_autor INTEGER NOT NULL,
+        num_adquisicion TEXT NOT NULL,
+        cantidad_ejemplares INTEGER NOT NULL,
         FOREIGN KEY (id_categoria) REFERENCES categorias (id),
         FOREIGN KEY (id_autor) REFERENCES autores (id)
       )
@@ -54,17 +56,54 @@ class Dao {
     await db.execute("""
       CREATE TABLE prestamos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        matricula TEXT NOT NULL,
+        no_control TEXT NOT NULL,
         nombre_solicitante TEXT NOT NULL,
         carrera TEXT NOT NULL,
-        cantidad_libros INTEGER NOT NULL,
-        numero_clasificador TEXT NOT NULL,
-        trabajador TEXT NOT NULL,
+        sexo TEXT NOT NULL,
+        num_libros INTEGER NOT NULL,
         fecha_prestamo TEXT,
-        fecha_devolucion TEXT NOT NULL,
-        observaciones TEXT
+        fecha_AcordadaDevolucion TEXT NOT NULL,
+        responsable_entrega INTEGER NOT NULL,
+        FOREIGN KEY (responsable_entrega) REFERENCES usuarios (id)
       )
     """);
+
+    await db.execute("""
+      CREATE TABLE detalleprestamos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_prestamo INTEGER NOT NULL,
+        id_libro INTEGER NOT NULL,
+        titulo TEXT NOT NULL,
+        no_adquisicion TEXT NOT NULL,
+        clasificacion TEXT NOT NULL,
+        autor TEXT NOT NULL,
+        FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
+        FOREIGN KEY (id_libro) REFERENCES libros (id)
+      )
+    """);
+    
+    await db.execute("""
+      CREATE TABLE usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        apellidos TEXT NOT NULL,
+        correo TEXT NOT NULL,
+        TipoUsuario TEXT NOT NULL,
+        contrasena TEXT NOT NULL
+      )
+    """);
+    await db.execute("""
+CREATE TABLE devoluciones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_prestamo INTEGER NOT NULL,
+  fecha_EntregaReal TEXT NOT NULL,
+  estado_libro TEXT,
+  responsable_devolucion INTEGER NOT NULL,
+  observaciones TEXT,
+  FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
+  FOREIGN KEY (responsable_devolucion) REFERENCES usuarios (id)
+)
+""");
   }
 
   // --------------------- AUTORES ---------------------
