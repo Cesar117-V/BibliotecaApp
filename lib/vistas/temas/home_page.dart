@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:biblioteca_app/vistas/temas/listas_libros.dart';
-import 'package:biblioteca_app/vistas/temas/lista_categorias.dart';
-import 'package:biblioteca_app/vistas/temas/lista_autores.dart';
 import 'package:biblioteca_app/vistas/temas/lista_prestamos.dart';
 import 'package:biblioteca_app/vistas/temas/lista_entradas.dart';
+import 'package:biblioteca_app/vistas/temas/inventario_screen.dart'; // 🔹 Importa esta nueva pantalla
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -20,23 +18,22 @@ class HomePage extends StatelessWidget {
             onPressed: () async {
               final confirmar = await showDialog<bool>(
                 context: context,
-                builder:
-                    (context) => AlertDialog(
-                      title: const Text('¿Cerrar sesión?'),
-                      content: const Text(
-                        '¿Estás seguro de que quieres cerrar sesión?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Cerrar Sesión'),
-                        ),
-                      ],
+                builder: (context) => AlertDialog(
+                  title: const Text('¿Cerrar sesión?'),
+                  content: const Text(
+                    '¿Estás seguro de que quieres cerrar sesión?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancelar'),
                     ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Cerrar Sesión'),
+                    ),
+                  ],
+                ),
               );
 
               if (confirmar == true) {
@@ -52,14 +49,8 @@ class HomePage extends StatelessWidget {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         children: [
-          _crearBoton(context, "Libros", Icons.book, const ListaLibros()),
           _crearBoton(
-            context,
-            "Categorías",
-            Icons.category,
-            const ListaCategorias(),
-          ),
-          _crearBoton(context, "Autores", Icons.person, const ListaAutores()),
+              context, "Inventario", Icons.inventory, const InventarioScreen()),
           _crearBoton(
             context,
             "Préstamos",
