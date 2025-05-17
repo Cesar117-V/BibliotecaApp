@@ -1,26 +1,25 @@
+import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
-import 'package:flutter/material.dart';
 
 Future<bool> confirmarEliminacion(BuildContext context, String mensaje) async {
   return await showDialog<bool>(
         context: context,
-        builder:
-            (_) => AlertDialog(
-              title: const Text("Confirmar eliminación"),
-              content: Text(mensaje),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancelar"),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text("Eliminar"),
-                ),
-              ],
+        builder: (_) => AlertDialog(
+          title: const Text("Confirmar eliminación"),
+          content: Text(mensaje),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancelar"),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Eliminar"),
+            ),
+          ],
+        ),
       ) ??
       false;
 }
@@ -48,26 +47,20 @@ class _ListaCategoriasState extends State<ListaCategorias> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Lista de Categorías")),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EdicionCategoria()),
-          );
-          _cargarCategorias();
-        },
-      ),
-      body: ListView.builder(
-        itemCount: _categorias.length,
-        itemBuilder: (context, index) {
-          final categoria = _categorias[index];
-          return ListTile(
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _categorias.length,
+      itemBuilder: (context, index) {
+        final categoria = _categorias[index];
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: ListTile(
             title: Text(categoria.nombre ?? ""),
             trailing: IconButton(
-              icon: const Icon(Icons.delete),
+              icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () async {
                 final confirmar = await confirmarEliminacion(
                   context,
@@ -88,9 +81,9 @@ class _ListaCategoriasState extends State<ListaCategorias> {
               );
               _cargarCategorias();
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
