@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 
 class EdicionLibro extends StatefulWidget {
   final Libro? libro;
-
   const EdicionLibro({Key? key, this.libro}) : super(key: key);
 
   @override
@@ -21,6 +20,8 @@ class _EdicionLibroState extends State<EdicionLibro> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _numPaginasController = TextEditingController();
+  final _stockController = TextEditingController(); // ← controller para stock
+
   String? _rutaImagen;
   int? _idCategoriaSeleccionada;
   int? _idAutorSeleccionado;
@@ -31,11 +32,14 @@ class _EdicionLibroState extends State<EdicionLibro> {
   void initState() {
     super.initState();
     _cargarDatos();
+
     if (widget.libro != null) {
       _tituloController.text = widget.libro!.titulo ?? "";
       _descripcionController.text = widget.libro!.descripcion ?? "";
       _numPaginasController.text =
           widget.libro!.numeroPaginas?.toString() ?? "";
+      _stockController.text =
+          widget.libro!.stock?.toString() ?? "0"; // ← poblamos stock
       _rutaImagen = widget.libro!.imagen;
       _idCategoriaSeleccionada = widget.libro!.idCategoria;
       _idAutorSeleccionado = widget.libro!.idAutor;
@@ -53,6 +57,7 @@ class _EdicionLibroState extends State<EdicionLibro> {
     _tituloController.dispose();
     _descripcionController.dispose();
     _numPaginasController.dispose();
+    _stockController.dispose(); // ← liberamos el controller
     super.dispose();
   }
 
@@ -65,96 +70,100 @@ class _EdicionLibroState extends State<EdicionLibro> {
       body: Form(
         key: _formKey,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: ListView(
             children: [
+              // Imagen
               GestureDetector(
                 onTap: _seleccionarImagen,
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundImage:
-                      _rutaImagen != null
-                          ? FileImage(File(_rutaImagen!))
-                          : null,
-                  child:
-                      _rutaImagen == null
-                          ? Icon(Icons.camera_alt, size: 50)
-                          : null,
+                  backgroundImage: _rutaImagen != null
+                      ? FileImage(File(_rutaImagen!))
+                      : null,
+                  child: _rutaImagen == null
+                      ? const Icon(Icons.camera_alt, size: 50)
+                      : null,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Título del libro
+              // Título
               TextFormField(
                 controller: _tituloController,
-                decoration: InputDecoration(labelText: "Título del Libro"),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? "Campo obligatorio"
-                            : null,
+                decoration:
+                    const InputDecoration(labelText: "Título del Libro"),
+                validator: (v) =>
+                    v == null || v.isEmpty ? "Campo obligatorio" : null,
               ),
+              const SizedBox(height: 12),
 
               // Número de páginas
               TextFormField(
                 controller: _numPaginasController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: "Número de Páginas"),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? "Campo obligatorio"
-                            : null,
+                decoration:
+                    const InputDecoration(labelText: "Número de Páginas"),
+                validator: (v) =>
+                    v == null || v.isEmpty ? "Campo obligatorio" : null,
               ),
+              const SizedBox(height: 12),
+
+              // Stock
+              TextFormField(
+                controller: _stockController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: "Stock (ejemplares)"),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return "Campo obligatorio";
+                  if (int.tryParse(v) == null) return "Debe ser un número";
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
 
               // Categoría
               DropdownButtonFormField<int>(
-                decoration: InputDecoration(labelText: "Categoría"),
+                decoration: const InputDecoration(labelText: "Categoría"),
                 value: _idCategoriaSeleccionada,
-                items:
-                    _listaCategorias.map((categoria) {
-                      return DropdownMenuItem<int>(
-                        value: categoria.id,
-                        child: Text(categoria.nombre ?? ""),
-                      );
-                    }).toList(),
-                onChanged:
-                    (value) => setState(() => _idCategoriaSeleccionada = value),
-                validator:
-                    (value) =>
-                        value == null ? "Seleccione una categoría" : null,
+                items: _listaCategorias.map((cat) {
+                  return DropdownMenuItem(
+                      value: cat.id, child: Text(cat.nombre ?? ""));
+                }).toList(),
+                onChanged: (v) => setState(() => _idCategoriaSeleccionada = v),
+                validator: (v) => v == null ? "Seleccione una categoría" : null,
               ),
+              const SizedBox(height: 12),
 
               // Autor
               DropdownButtonFormField<int>(
-                decoration: InputDecoration(labelText: "Autor"),
+                decoration: const InputDecoration(labelText: "Autor"),
                 value: _idAutorSeleccionado,
-                items:
-                    _listaAutores.map((autor) {
-                      return DropdownMenuItem<int>(
-                        value: autor.id,
-                        child: Text(
-                          "${autor.nombre ?? ""} ${autor.apellidos ?? ""}",
-                        ),
-                      );
-                    }).toList(),
-                onChanged:
-                    (value) => setState(() => _idAutorSeleccionado = value),
-                validator:
-                    (value) => value == null ? "Seleccione un autor" : null,
+                items: _listaAutores.map((a) {
+                  return DropdownMenuItem(
+                    value: a.id,
+                    child: Text("${a.nombre} ${a.apellidos}"),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _idAutorSeleccionado = v),
+                validator: (v) => v == null ? "Seleccione un autor" : null,
               ),
+              const SizedBox(height: 20),
 
               // Descripción
               TextFormField(
                 controller: _descripcionController,
-                decoration: InputDecoration(labelText: "Descripción"),
+                decoration: const InputDecoration(labelText: "Descripción"),
                 maxLines: 5,
               ),
-
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               // Botón Guardar
-              ElevatedButton(onPressed: _guardarLibro, child: Text("Guardar")),
+              ElevatedButton(
+                onPressed: _guardarLibro,
+                child: const Text("Guardar"),
+              ),
             ],
           ),
         ),
@@ -163,33 +172,18 @@ class _EdicionLibroState extends State<EdicionLibro> {
   }
 
   Future<void> _seleccionarImagen() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _rutaImagen = pickedFile.path;
-      });
-    }
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) setState(() => _rutaImagen = picked.path);
   }
 
   Future<void> _guardarLibro() async {
     if (_rutaImagen == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Selecciona una imagen del libro")),
+        const SnackBar(content: Text("Selecciona una imagen del libro")),
       );
       return;
     }
-
     if (_formKey.currentState!.validate()) {
-      // AQUI agregas los prints
-      print("Datos a guardar:");
-      print("Título: ${_tituloController.text}");
-      print("Número de páginas: ${_numPaginasController.text}");
-      print("Categoría ID: $_idCategoriaSeleccionada");
-      print("Autor ID: $_idAutorSeleccionado");
-      print("Ruta Imagen: $_rutaImagen");
-
       final libro = Libro(
         titulo: _tituloController.text,
         descripcion: _descripcionController.text,
@@ -197,6 +191,7 @@ class _EdicionLibroState extends State<EdicionLibro> {
         imagen: _rutaImagen,
         idCategoria: _idCategoriaSeleccionada,
         idAutor: _idAutorSeleccionado,
+        stock: int.tryParse(_stockController.text) ?? 0, // ← leemos stock
       );
 
       if (widget.libro == null) {
@@ -206,11 +201,11 @@ class _EdicionLibroState extends State<EdicionLibro> {
         await Dao.updateLibro(libro);
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Libro guardado exitosamente")));
-
-      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Libro guardado exitosamente")),
+      );
+      // devolvemos 'true' para que la lista se recargue
+      Navigator.pop(context, true);
     }
   }
 }
