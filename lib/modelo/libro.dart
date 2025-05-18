@@ -6,6 +6,7 @@ class Libro {
   int? idCategoria;
   int? numeroPaginas;
   int? idAutor;
+  int? stock;
 
   // Constructor principal
   Libro({
@@ -16,6 +17,7 @@ class Libro {
     this.idCategoria,
     this.numeroPaginas,
     this.idAutor,
+    this.stock = 0,
   });
 
   // Constructor desde JSON
@@ -27,6 +29,7 @@ class Libro {
     idCategoria = json['id_categoria'];
     numeroPaginas = json['numero_paginas'];
     idAutor = json['id_autor'];
+    stock = json['stock'] ?? 0;
   }
 
   Map<String, dynamic> toJson() {
@@ -38,6 +41,7 @@ class Libro {
       'id_categoria': idCategoria,
       'numero_paginas': numeroPaginas,
       'id_autor': idAutor,
+      'stock': stock,
     };
   }
 }

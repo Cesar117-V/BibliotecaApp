@@ -17,7 +17,19 @@ class Dao {
   static Future<Database> _initDB(String filePath) async {
     final databasePath = await getDatabasesPath();
     final path = join(databasePath, filePath);
-    return await openDatabase(path, version: 6, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 7, // <-- Antes era 6, ahora 7
+      onCreate: _createDB,
+      onUpgrade: (db, oldV, newV) async {
+        if (oldV < 7) {
+          // Sólo corre una vez, la primera vez que abra versión 7
+          await db.execute(
+            'ALTER TABLE libros ADD COLUMN stock INTEGER NOT NULL DEFAULT 0',
+          );
+        }
+      },
+    );
   }
 
   static Future _createDB(Database db, int version) async {
@@ -46,6 +58,7 @@ class Dao {
         id_categoria INTEGER NOT NULL,
         numero_paginas INTEGER NOT NULL,
         id_autor INTEGER NOT NULL,
+        stock INTEGER NOT NULL DEFAULT 0, 
         FOREIGN KEY (id_categoria) REFERENCES categorias (id),
         FOREIGN KEY (id_autor) REFERENCES autores (id)
       )
@@ -71,6 +84,7 @@ class Dao {
   static Future<Autor> createAutor(Autor autor) async {
     final db = await database;
     final id = await db.insert('autores', autor.toJson());
+    print("✅ [DAO] autor insertado con id=$id");
     autor.id = id;
     return autor;
   }
@@ -99,7 +113,9 @@ class Dao {
   static Future<List<Autor>> listaAutores() async {
     final db = await database;
     final maps = await db.query('autores');
-    return List.generate(maps.length, (i) => Autor.fromJson(maps[i]));
+    final lista = List.generate(maps.length, (i) => Autor.fromJson(maps[i]));
+    print("🔍 [DAO] listaAutores encontró ${lista.length} registros");
+    return lista;
   }
 
   // --------------------- CATEGORÍAS ---------------------

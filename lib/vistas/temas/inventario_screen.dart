@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/listas_libros.dart';
 import 'package:biblioteca_app/vistas/temas/lista_categorias.dart';
 import 'package:biblioteca_app/vistas/temas/lista_autores.dart';
+import 'package:biblioteca_app/vistas/temas/edicion_libro.dart';
+import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
+import 'package:biblioteca_app/vistas/temas/edicion_autor.dart';
 
 class InventarioScreen extends StatefulWidget {
   const InventarioScreen({super.key});
@@ -50,6 +53,46 @@ class _InventarioScreenState extends State<InventarioScreen>
     );
   }
 
+  Widget? _buildFloatingButton() {
+    switch (_activeIndex) {
+      case 0:
+        return FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EdicionLibro()),
+            );
+            setState(() {});
+          },
+          child: const Icon(Icons.add),
+        );
+      case 1:
+        return FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EdicionCategoria()),
+            );
+            setState(() {});
+          },
+          child: const Icon(Icons.add),
+        );
+      case 2:
+        return FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EdicionAutor()),
+            );
+            setState(() {});
+          },
+          child: const Icon(Icons.add),
+        );
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,6 +116,7 @@ class _InventarioScreenState extends State<InventarioScreen>
         padding: const EdgeInsets.all(8),
         child: _buildTabContent(),
       ),
+      floatingActionButton: _buildFloatingButton(),
     );
   }
 }
