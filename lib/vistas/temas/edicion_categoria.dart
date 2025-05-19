@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
-import 'package:flutter/material.dart';
 
 class EdicionCategoria extends StatefulWidget {
   final Categoria? categoria;
@@ -24,12 +24,17 @@ class _EdicionCategoriaState extends State<EdicionCategoria> {
   }
 
   @override
+  void dispose() {
+    _nombreController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.categoria == null ? "Nueva Categoría" : "Editar Categoría",
-        ),
+            widget.categoria == null ? "Nueva Categoría" : "Editar Categoría"),
       ),
       body: Form(
         key: _formKey,
@@ -39,14 +44,14 @@ class _EdicionCategoriaState extends State<EdicionCategoria> {
             children: [
               TextFormField(
                 controller: _nombreController,
-                decoration: InputDecoration(labelText: "Nombre"),
-                validator:
-                    (value) => value!.isEmpty ? "Campo obligatorio" : null,
+                decoration: const InputDecoration(labelText: "Nombre"),
+                validator: (value) =>
+                    value!.trim().isEmpty ? "Campo obligatorio" : null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _guardarCategoria,
-                child: Text("Guardar"),
+                child: const Text("Guardar"),
               ),
             ],
           ),
@@ -57,14 +62,21 @@ class _EdicionCategoriaState extends State<EdicionCategoria> {
 
   Future<void> _guardarCategoria() async {
     if (_formKey.currentState!.validate()) {
-      final categoria = Categoria(nombre: _nombreController.text);
+      final nuevoNombre = _nombreController.text.trim();
+      final nuevaCategoria = Categoria(
+        id: widget.categoria?.id,
+        nombre: nuevoNombre,
+      );
+
       if (widget.categoria == null) {
-        await Dao.createCategoria(categoria);
+        await Dao.createCategoria(nuevaCategoria);
       } else {
-        categoria.id = widget.categoria!.id;
-        await Dao.updateCategoria(categoria);
+        await Dao.updateCategoria(nuevaCategoria);
       }
-      Navigator.pop(context);
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
     }
   }
 }

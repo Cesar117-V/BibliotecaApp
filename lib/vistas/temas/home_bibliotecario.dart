@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/lista_prestamos.dart';
-import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
-import 'package:biblioteca_app/vistas/temas/gestion_bibliotecarios.dart';
 import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+class HomeBibliotecario extends StatelessWidget {
+  const HomeBibliotecario({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Biblioteca del Itch"),
+        title: const Text("Biblioteca - Bibliotecario"),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -21,8 +19,7 @@ class HomePage extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('¿Cerrar sesión?'),
-                  content:
-                      const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -49,25 +46,14 @@ class HomePage extends StatelessWidget {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         children: [
-          _crearBoton(
-              context, "Inventario", Icons.inventory, const InventarioScreen()),
-          _crearBoton(context, "Gestión de Bibliotecarios",
-              Icons.manage_accounts, const GestionBibliotecariosScreen()),
-          _crearBoton(context, "Préstamos", Icons.assignment_return,
-              const ListaPrestamos()),
-          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
-              const ListaDevoluciones()),
+          _crearBoton(context, "Préstamos", Icons.assignment_return, const ListaPrestamos()),
+          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in, const ListaDevoluciones()),
         ],
       ),
     );
   }
 
-  Widget _crearBoton(
-    BuildContext context,
-    String titulo,
-    IconData icono,
-    Widget pagina,
-  ) {
+  Widget _crearBoton(BuildContext context, String titulo, IconData icono, Widget pagina) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.all(16.0),

@@ -1,10 +1,10 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-// IMPORTA ESTO para desktop
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-// (Sólo si quieres correr en web también)
-// import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'package:biblioteca_app/vistas/temas/temas.dart';
 import 'package:biblioteca_app/vistas/temas/home_page.dart';
@@ -14,13 +14,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
-    // si vas a soportar web, descomenta:
-    // databaseFactory = databaseFactoryFfiWeb;
-  } else {
-    // ¡Esto es crítico!
-    // Inicializa la implementación de sqflite para desktop
+    // Web
+    databaseFactory = databaseFactoryFfiWeb;
+  } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Escritorio
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  } else {
+    // Android/iOS: no es necesario hacer nada, usa sqflite por defecto
   }
 
   runApp(const MyApp());
@@ -28,6 +29,7 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

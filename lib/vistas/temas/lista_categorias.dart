@@ -45,6 +45,19 @@ class _ListaCategoriasState extends State<ListaCategorias> {
     setState(() {});
   }
 
+  Future<void> _editarCategoria([Categoria? categoria]) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EdicionCategoria(categoria: categoria),
+      ),
+    );
+
+    if (resultado == true) {
+      _cargarCategorias();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -55,8 +68,9 @@ class _ListaCategoriasState extends State<ListaCategorias> {
         return Card(
           elevation: 3,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: ListTile(
             title: Text(categoria.nombre ?? ""),
             trailing: IconButton(
@@ -72,15 +86,7 @@ class _ListaCategoriasState extends State<ListaCategorias> {
                 }
               },
             ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EdicionCategoria(categoria: categoria),
-                ),
-              );
-              _cargarCategorias();
-            },
+            onTap: () => _editarCategoria(categoria),
           ),
         );
       },

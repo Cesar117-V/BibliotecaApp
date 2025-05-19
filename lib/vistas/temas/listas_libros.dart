@@ -33,7 +33,7 @@ class ListaLibros extends StatefulWidget {
 }
 
 class _ListaLibrosState extends State<ListaLibros> {
-  List<Libro> _libros = [];
+  Map<String, List<Libro>> _librosAgrupados = {};
 
   @override
   void initState() {
@@ -42,51 +42,98 @@ class _ListaLibrosState extends State<ListaLibros> {
   }
 
   Future<void> _cargarLibros() async {
-    _libros = await Dao.listaLibros();
-    setState(() {});
+    final libros = await Dao.listaLibros();
+    final agrupados = <String, List<Libro>>{};
+
+    for (var libro in libros) {
+      final titulo = libro.titulo ?? 'Sin título';
+      agrupados.putIfAbsent(titulo, () => []).add(libro);
+    }
+
+    setState(() {
+      _librosAgrupados = agrupados;
+    });
+  }
+
+  Future<void> _editarLibro([Libro? libro]) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EdicionLibro(libro: libro)),
+    );
+    if (result == true) {
+      _cargarLibros();
+    }
+  }
+
+  void _mostrarEjemplaresModal(List<Libro> libros) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: libros.length,
+        itemBuilder: (context, index) {
+          final libro = libros[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              leading: libro.imagen != null
+                  ? CircleAvatar(
+                      backgroundImage: FileImage(File(libro.imagen!)))
+                  : const CircleAvatar(child: Icon(Icons.book)),
+              title: Text("Páginas: ${libro.numeroPaginas ?? 0}"),
+              subtitle: libro.numAdquisicion != null &&
+                      libro.numAdquisicion!.isNotEmpty
+                  ? Text("Adquisición: ${libro.numAdquisicion!}")
+                  : null,
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () async {
+                  final confirmar = await confirmarEliminacion(
+                    context,
+                    "¿Deseas eliminar este ejemplar?",
+                  );
+                  if (confirmar) {
+                    await Dao.deleteLibro(libro.id!);
+                    Navigator.pop(context);
+                    _cargarLibros();
+                  }
+                },
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _editarLibro(libro);
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(12),
-      itemCount: _libros.length,
-      itemBuilder: (context, index) {
-        final libro = _libros[index];
+      children: _librosAgrupados.entries.map((entry) {
+        final titulo = entry.key;
+        final libros = entry.value;
+
         return Card(
-          elevation: 3,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
-            leading: libro.imagen != null
-                ? CircleAvatar(backgroundImage: FileImage(File(libro.imagen!)))
+            title: Text("$titulo (${libros.length} ejemplares)"),
+            subtitle: Text("Páginas: ${libros.first.numeroPaginas ?? 0}"),
+            leading: libros.first.imagen != null
+                ? CircleAvatar(
+                    backgroundImage: FileImage(File(libros.first.imagen!)))
                 : const CircleAvatar(child: Icon(Icons.book)),
-            title: Text(libro.titulo ?? ""),
-            subtitle: Text("Páginas: ${libro.numeroPaginas ?? 0}"),
             trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                final confirmar = await confirmarEliminacion(
-                  context,
-                  "¿Deseas eliminar este libro?",
-                );
-                if (confirmar) {
-                  await Dao.deleteLibro(libro.id!);
-                  _cargarLibros();
-                }
-              },
+              icon: const Icon(Icons.remove_red_eye),
+              onPressed: () => _mostrarEjemplaresModal(libros),
             ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => EdicionLibro(libro: libro)),
-              );
-              _cargarLibros();
-            },
+            onTap: () => _mostrarEjemplaresModal(libros),
           ),
         );
-      },
+      }).toList(),
     );
   }
 }
