@@ -293,4 +293,15 @@ class Dao {
     final db = await database;
     return await db.delete('bibliotecarios', where: 'id = ?', whereArgs: [id]);
   }
+
+//validar bibliotecario
+  static Future<bool> validarBibliotecario(String correo, String codigo) async {
+    final db = await database;
+    final result = await db.query(
+      'bibliotecarios',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+    return result.isNotEmpty;
+  }
 }

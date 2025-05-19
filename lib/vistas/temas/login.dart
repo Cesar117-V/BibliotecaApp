@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/home_page.dart';
 import 'package:biblioteca_app/vistas/temas/home_bibliotecario.dart';
+import 'package:biblioteca_app/modelo/database/dao.dart'; // Asegúrate de importar esto
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -22,9 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _iniciarSesion() {
+  void _iniciarSesion() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final tipoUsuario = _seleccionTipo[0] ? 'admin' : 'bibliotecario';
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -33,10 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final tipoUsuario = _seleccionTipo[0] ? 'admin' : 'bibliotecario';
-
     if (tipoUsuario == 'admin') {
-      // Validación estricta de administrador
       if (email == 'anet13@outlook.es' && password == 'Viri2152') {
         Navigator.pushReplacement(
           context,
@@ -50,11 +49,18 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      // Aquí irá la validación real de bibliotecarios si se implementa más adelante
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeBibliotecario()),
-      );
+      final esValido = await Dao.validarBibliotecario(email, password);
+      if (esValido) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeBibliotecario()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Correo o código incorrecto para bibliotecario')),
+        );
+      }
     }
   }
 
@@ -115,17 +121,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(40),
                     ),
                   ),
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'Contraseña',
+                    labelText: _seleccionTipo[0]
+                        ? 'Contraseña'
+                        : 'Código de 6 dígitos',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(40),
                     ),
                   ),
+                  keyboardType: _seleccionTipo[0]
+                      ? TextInputType.visiblePassword
+                      : TextInputType.number,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -148,7 +160,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
-                    // Acción recuperar contraseña (por implementar)
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text('Recuperar acceso'),
+                        content: const Text(
+                            'Si olvidaste la contraseña del administrador, contacta al responsable del sistema.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   child: const Text(
                     '¿Olvidaste tu contraseña?',
