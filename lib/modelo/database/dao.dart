@@ -2,6 +2,7 @@ import 'package:biblioteca_app/modelo/autor.dart';
 import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/libro.dart';
 import 'package:biblioteca_app/modelo/prestamo.dart';
+import 'package:biblioteca_app/modelo/bibliotecario.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -121,6 +122,18 @@ class Dao {
         FOREIGN KEY (responsable_devolucion) REFERENCES usuarios (id)
       )
     """);
+
+    await db.execute("""
+  CREATE TABLE bibliotecarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    apellidos TEXT NOT NULL,
+    matricula TEXT NOT NULL,
+    carrera TEXT NOT NULL,
+    correo TEXT NOT NULL UNIQUE,
+    codigo TEXT NOT NULL
+  )
+""");
   }
 
   // --------------------- AUTORES ---------------------
@@ -246,5 +259,38 @@ class Dao {
     final db = await database;
     final maps = await db.query('prestamos');
     return List.generate(maps.length, (i) => Prestamo.fromJson(maps[i]));
+  }
+
+  // --------------------- BIBLIOTECARIOS ---------------------
+// LISTA
+  static Future<List<Bibliotecario>> listaBibliotecarios() async {
+    final db = await database;
+    final maps = await db.query('bibliotecarios');
+    return List.generate(maps.length, (i) => Bibliotecario.fromJson(maps[i]));
+  }
+
+// CREAR
+  static Future<Bibliotecario> createBibliotecario(Bibliotecario b) async {
+    final db = await database;
+    final id = await db.insert('bibliotecarios', b.toJson());
+    b.id = id;
+    return b;
+  }
+
+// ACTUALIZAR
+  static Future<int> updateBibliotecario(Bibliotecario b) async {
+    final db = await database;
+    return await db.update(
+      'bibliotecarios',
+      b.toJson(),
+      where: 'id = ?',
+      whereArgs: [b.id],
+    );
+  }
+
+// ELIMINAR
+  static Future<int> deleteBibliotecario(int id) async {
+    final db = await database;
+    return await db.delete('bibliotecarios', where: 'id = ?', whereArgs: [id]);
   }
 }

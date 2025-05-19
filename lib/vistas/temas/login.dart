@@ -33,15 +33,24 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Simulación de login según tipo seleccionado
     final tipoUsuario = _seleccionTipo[0] ? 'admin' : 'bibliotecario';
 
     if (tipoUsuario == 'admin') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
+      // Validación estricta de administrador
+      if (email == 'anet13@outlook.es' && password == 'Viri2152') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Correo o contraseña de administrador incorrectos')),
+        );
+      }
     } else {
+      // Aquí irá la validación real de bibliotecarios si se implementa más adelante
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeBibliotecario()),
