@@ -15,8 +15,7 @@ class _EdicionAutorState extends State<EdicionAutor> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _apellidoController = TextEditingController();
-  final _correoController =
-      TextEditingController(); // NUEVO controlador para correo
+  final _correoController = TextEditingController();
 
   @override
   void initState() {
@@ -24,8 +23,7 @@ class _EdicionAutorState extends State<EdicionAutor> {
     if (widget.autor != null) {
       _nombreController.text = widget.autor!.nombre ?? "";
       _apellidoController.text = widget.autor!.apellidos ?? "";
-      _correoController.text =
-          widget.autor!.correo ?? ""; // Cargar correo si edita
+      _correoController.text = widget.autor!.correo ?? "";
     }
   }
 
@@ -51,39 +49,36 @@ class _EdicionAutorState extends State<EdicionAutor> {
             children: [
               TextFormField(
                 controller: _nombreController,
-                decoration: InputDecoration(labelText: "Nombre"),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? "Campo obligatorio"
-                            : null,
+                decoration: const InputDecoration(labelText: "Nombre"),
+                validator: (value) =>
+                    value == null || value.isEmpty ? "Campo obligatorio" : null,
               ),
               TextFormField(
                 controller: _apellidoController,
-                decoration: InputDecoration(labelText: "Apellido"),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? "Campo obligatorio"
-                            : null,
+                decoration: const InputDecoration(labelText: "Apellido"),
+                validator: (value) =>
+                    value == null || value.isEmpty ? "Campo obligatorio" : null,
               ),
               TextFormField(
                 controller: _correoController,
-                decoration: InputDecoration(labelText: "Correo electrónico"),
+                decoration:
+                    const InputDecoration(labelText: "Correo electrónico"),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return "Campo obligatorio";
                   }
-                  if (!RegExp(
-                    r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$",
-                  ).hasMatch(value)) {
+                  if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")
+                      .hasMatch(value)) {
                     return "Correo inválido";
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: _guardarAutor, child: Text("Guardar")),
+              ElevatedButton(
+                onPressed: _guardarAutor,
+                child: const Text("Guardar"),
+              ),
             ],
           ),
         ),
@@ -104,7 +99,8 @@ class _EdicionAutorState extends State<EdicionAutor> {
         autor.id = widget.autor!.id;
         await Dao.updateAutor(autor);
       }
-      Navigator.pop(context);
+
+      Navigator.pop(context, true);
     }
   }
 }

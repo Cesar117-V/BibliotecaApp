@@ -54,43 +54,37 @@ class _InventarioScreenState extends State<InventarioScreen>
   }
 
   Widget? _buildFloatingButton() {
-    switch (_activeIndex) {
-      case 0:
-        return FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(
+    return FloatingActionButton(
+      onPressed: () async {
+        bool? result;
+
+        switch (_activeIndex) {
+          case 0:
+            result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EdicionLibro()),
             );
-            setState(() {});
-          },
-          child: const Icon(Icons.add),
-        );
-      case 1:
-        return FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(
+            break;
+          case 1:
+            result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EdicionCategoria()),
             );
-            setState(() {});
-          },
-          child: const Icon(Icons.add),
-        );
-      case 2:
-        return FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(
+            break;
+          case 2:
+            result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EdicionAutor()),
             );
-            setState(() {});
-          },
-          child: const Icon(Icons.add),
-        );
-      default:
-        return null;
-    }
+            break;
+        }
+
+        if (result == true) {
+          setState(() {}); // Recarga la lista activa si se guardó algo
+        }
+      },
+      child: const Icon(Icons.add),
+    );
   }
 
   @override

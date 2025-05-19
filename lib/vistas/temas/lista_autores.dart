@@ -45,6 +45,16 @@ class _ListaAutoresState extends State<ListaAutores> {
     setState(() {});
   }
 
+  Future<void> _editarAutor([Autor? autor]) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EdicionAutor(autor: autor)),
+    );
+    if (resultado == true) {
+      _cargarAutores();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -72,13 +82,7 @@ class _ListaAutoresState extends State<ListaAutores> {
                 }
               },
             ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => EdicionAutor(autor: autor)),
-              );
-              _cargarAutores();
-            },
+            onTap: () => _editarAutor(autor),
           ),
         );
       },

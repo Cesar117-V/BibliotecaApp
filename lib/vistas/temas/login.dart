@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/home_page.dart';
+import 'package:biblioteca_app/vistas/temas/home_bibliotecario.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -11,6 +12,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  List<bool> _seleccionTipo = [true, false]; // [Administrador, Bibliotecario]
 
   @override
   void dispose() {
@@ -30,8 +33,20 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Ir a la pantalla principal
-    Navigator.pushReplacementNamed(context, '/home');
+    // Simulación de login según tipo seleccionado
+    final tipoUsuario = _seleccionTipo[0] ? 'admin' : 'bibliotecario';
+
+    if (tipoUsuario == 'admin') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeBibliotecario()),
+      );
+    }
   }
 
   @override
@@ -59,6 +74,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
+                ),
+                const SizedBox(height: 16),
+                ToggleButtons(
+                  isSelected: _seleccionTipo,
+                  onPressed: (int index) {
+                    setState(() {
+                      for (int i = 0; i < _seleccionTipo.length; i++) {
+                        _seleccionTipo[i] = i == index;
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  selectedColor: Colors.white,
+                  fillColor: const Color(0xFF0D47A1),
+                  color: Colors.black87,
+                  constraints:
+                      const BoxConstraints(minHeight: 40, minWidth: 140),
+                  children: const [
+                    Text("Administrador"),
+                    Text("Bibliotecario"),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 TextField(

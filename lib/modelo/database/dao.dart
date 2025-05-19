@@ -15,20 +15,23 @@ class Dao {
   }
 
   static Future<Database> _initDB(String filePath) async {
-    final databasePath = await getDatabasesPath();
+    final databasePath = await databaseFactory
+        .getDatabasesPath(); // ✅ para compatibilidad multiplataforma
     final path = join(databasePath, filePath);
-    return await openDatabase(
+    return await databaseFactory.openDatabase(
+      // ✅ usa databaseFactory según plataforma
       path,
-      version: 7, // <-- Antes era 6, ahora 7
-      onCreate: _createDB,
-      onUpgrade: (db, oldV, newV) async {
-        if (oldV < 7) {
-          // Sólo corre una vez, la primera vez que abra versión 7
-          await db.execute(
-            'ALTER TABLE libros ADD COLUMN stock INTEGER NOT NULL DEFAULT 0',
-          );
-        }
-      },
+      options: OpenDatabaseOptions(
+        version: 7,
+        onCreate: _createDB,
+        onUpgrade: (db, oldV, newV) async {
+          if (oldV < 7) {
+            await db.execute(
+              'ALTER TABLE libros ADD COLUMN stock INTEGER NOT NULL DEFAULT 0',
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -105,18 +108,19 @@ class Dao {
         contrasena TEXT NOT NULL
       )
     """);
+
     await db.execute("""
-CREATE TABLE devoluciones (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  id_prestamo INTEGER NOT NULL,
-  fecha_EntregaReal TEXT NOT NULL,
-  estado_libro TEXT,
-  responsable_devolucion INTEGER NOT NULL,
-  observaciones TEXT,
-  FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
-  FOREIGN KEY (responsable_devolucion) REFERENCES usuarios (id)
-)
-""");
+      CREATE TABLE devoluciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_prestamo INTEGER NOT NULL,
+        fecha_EntregaReal TEXT NOT NULL,
+        estado_libro TEXT,
+        responsable_devolucion INTEGER NOT NULL,
+        observaciones TEXT,
+        FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
+        FOREIGN KEY (responsable_devolucion) REFERENCES usuarios (id)
+      )
+    """);
   }
 
   // --------------------- AUTORES ---------------------
