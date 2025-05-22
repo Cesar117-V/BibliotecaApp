@@ -7,8 +7,9 @@ class Libro {
   int? numeroPaginas;
   int? idAutor;
   int? stock;
-  String? numAdquisicion; // NUEVO
-  int? cantidadEjemplares; // NUEVO
+  String? numAdquisicion;
+  int? cantidadEjemplares;
+  bool? disponible;
 
   // Constructor principal
   Libro({
@@ -22,6 +23,7 @@ class Libro {
     this.stock = 0,
     this.numAdquisicion,
     this.cantidadEjemplares,
+    this.disponible = true, // por defecto disponible
   });
 
   // Constructor desde JSON
@@ -36,6 +38,7 @@ class Libro {
     stock = json['stock'] ?? 0;
     numAdquisicion = json['num_adquisicion'];
     cantidadEjemplares = json['cantidad_ejemplares'];
+    disponible = json['disponible'] == 1;
   }
 
   Map<String, dynamic> toJson() {
@@ -50,6 +53,7 @@ class Libro {
       'stock': stock,
       'num_adquisicion': numAdquisicion,
       'cantidad_ejemplares': cantidadEjemplares,
+      'disponible': (disponible ?? true) ? 1 : 0,
     };
   }
 }

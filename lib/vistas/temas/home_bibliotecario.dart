@@ -1,6 +1,8 @@
+import 'package:biblioteca_app/vistas/temas/lista_prestamos_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/lista_prestamos.dart';
 import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
+import 'package:biblioteca_app/util/sesion_usuario.dart'; // ✅
 
 class HomeBibliotecario extends StatelessWidget {
   const HomeBibliotecario({Key? key}) : super(key: key);
@@ -9,7 +11,19 @@ class HomeBibliotecario extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Biblioteca - Bibliotecario"),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Biblioteca - Bibliotecario",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              SesionUsuario.nombre,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -19,7 +33,8 @@ class HomeBibliotecario extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('¿Cerrar sesión?'),
-                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  content:
+                      const Text('¿Estás seguro de que quieres cerrar sesión?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -46,14 +61,17 @@ class HomeBibliotecario extends StatelessWidget {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         children: [
-          _crearBoton(context, "Préstamos", Icons.assignment_return, const ListaPrestamos()),
-          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in, const ListaDevoluciones()),
+          _crearBoton(context, "Préstamos", Icons.assignment_return,
+              const ListaPrestamosTab()),
+          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
+              const ListaDevoluciones()),
         ],
       ),
     );
   }
 
-  Widget _crearBoton(BuildContext context, String titulo, IconData icono, Widget pagina) {
+  Widget _crearBoton(
+      BuildContext context, String titulo, IconData icono, Widget pagina) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.all(16.0),

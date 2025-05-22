@@ -5,6 +5,7 @@ import 'package:biblioteca_app/vistas/temas/lista_autores.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_libro.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_autor.dart';
+import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
 
 class InventarioScreen extends StatefulWidget {
   const InventarioScreen({super.key});
@@ -18,10 +19,12 @@ class _InventarioScreenState extends State<InventarioScreen>
   late TabController _tabController;
   int _activeIndex = 0;
 
-  final List<Widget> _views = const [
-    ListaLibros(key: PageStorageKey('libros')),
-    ListaCategorias(key: PageStorageKey('categorias')),
-    ListaAutores(key: PageStorageKey('autores')),
+  final GlobalKey<ListaLibrosState> librosKey = GlobalKey<ListaLibrosState>();
+
+  late final List<Widget> _views = [
+    ListaLibros(key: librosKey),
+    const ListaCategorias(key: PageStorageKey('categorias')),
+    const ListaAutores(key: PageStorageKey('autores')),
   ];
 
   @override
@@ -80,7 +83,11 @@ class _InventarioScreenState extends State<InventarioScreen>
         }
 
         if (result == true) {
-          setState(() {}); // Recarga la lista activa si se guardó algo
+          setState(() {}); // Refresca la vista activa
+          if (_activeIndex == 0) {
+            librosKey.currentState
+                ?.cargarLibros(); // Asegúrate de que sea pública
+          }
         }
       },
       child: const Icon(Icons.add),

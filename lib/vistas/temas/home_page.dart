@@ -1,8 +1,11 @@
+import 'package:biblioteca_app/vistas/temas/lista_prestamos_tab.dart';
+import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/lista_prestamos.dart';
 import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
 import 'package:biblioteca_app/vistas/temas/gestion_bibliotecarios.dart';
 import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
+import 'package:biblioteca_app/util/sesion_usuario.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -11,7 +14,19 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Biblioteca del Itch"),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Biblioteca del Itch",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              SesionUsuario.nombre,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -35,7 +50,6 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               );
-
               if (confirmar == true) {
                 Navigator.pushReplacementNamed(context, '/login');
               }
@@ -54,7 +68,7 @@ class HomePage extends StatelessWidget {
           _crearBoton(context, "Gestión de Bibliotecarios",
               Icons.manage_accounts, const GestionBibliotecariosScreen()),
           _crearBoton(context, "Préstamos", Icons.assignment_return,
-              const ListaPrestamos()),
+              const PrestamosTabScreen()),
           _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
               const ListaDevoluciones()),
         ],
@@ -63,11 +77,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _crearBoton(
-    BuildContext context,
-    String titulo,
-    IconData icono,
-    Widget pagina,
-  ) {
+      BuildContext context, String titulo, IconData icono, Widget pagina) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.all(16.0),
