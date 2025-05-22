@@ -29,27 +29,30 @@ class ListaLibros extends StatefulWidget {
   const ListaLibros({Key? key}) : super(key: key);
 
   @override
-  _ListaLibrosState createState() => _ListaLibrosState();
+  State<ListaLibros> createState() => ListaLibrosState();
 }
 
-class _ListaLibrosState extends State<ListaLibros> {
+class ListaLibrosState extends State<ListaLibros> {
   Map<String, List<Libro>> _librosAgrupados = {};
 
   @override
   void initState() {
     super.initState();
-    _cargarLibros();
+    cargarLibros();
   }
 
-  Future<void> _cargarLibros() async {
+  Future<void> cargarLibros() async {
     final libros = await Dao.listaLibros();
     final agrupados = <String, List<Libro>>{};
 
     for (var libro in libros) {
-      final titulo = libro.titulo ?? 'Sin título';
+      final titulo = libro.titulo?.trim().isNotEmpty == true
+          ? libro.titulo!
+          : 'Sin título';
       agrupados.putIfAbsent(titulo, () => []).add(libro);
     }
 
+    if (!mounted) return;
     setState(() {
       _librosAgrupados = agrupados;
     });
@@ -60,19 +63,32 @@ class _ListaLibrosState extends State<ListaLibros> {
       context,
       MaterialPageRoute(builder: (_) => EdicionLibro(libro: libro)),
     );
-    if (result == true) {
-      _cargarLibros();
+    if (result == true && mounted) {
+      cargarLibros();
     }
   }
 
   void _mostrarEjemplaresModal(List<Libro> libros) {
+    for (var l in libros) {
+      debugPrint("Libro: ${l.numAdquisicion}, disponible: ${l.disponible}");
+    }
+
+    final disponibles = libros.where((l) => l.disponible ?? true).toList();
+
+    if (disponibles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No hay ejemplares disponibles")),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       builder: (_) => ListView.builder(
         padding: const EdgeInsets.all(12),
-        itemCount: libros.length,
+        itemCount: disponibles.length,
         itemBuilder: (context, index) {
-          final libro = libros[index];
+          final libro = disponibles[index];
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
@@ -81,8 +97,7 @@ class _ListaLibrosState extends State<ListaLibros> {
                       backgroundImage: FileImage(File(libro.imagen!)))
                   : const CircleAvatar(child: Icon(Icons.book)),
               title: Text("Páginas: ${libro.numeroPaginas ?? 0}"),
-              subtitle: libro.numAdquisicion != null &&
-                      libro.numAdquisicion!.isNotEmpty
+              subtitle: libro.numAdquisicion?.isNotEmpty == true
                   ? Text("Adquisición: ${libro.numAdquisicion!}")
                   : null,
               trailing: IconButton(
@@ -94,8 +109,8 @@ class _ListaLibrosState extends State<ListaLibros> {
                   );
                   if (confirmar) {
                     await Dao.deleteLibro(libro.id!);
-                    Navigator.pop(context);
-                    _cargarLibros();
+                    if (mounted) Navigator.pop(context);
+                    cargarLibros();
                   }
                 },
               ),
@@ -120,7 +135,8 @@ class _ListaLibrosState extends State<ListaLibros> {
 
         return Card(
           child: ListTile(
-            title: Text("$titulo (${libros.length} ejemplares)"),
+            title: Text(
+                "$titulo (${libros.where((l) => l.disponible ?? true).length} disponibles)"),
             subtitle: Text("Páginas: ${libros.first.numeroPaginas ?? 0}"),
             leading: libros.first.imagen != null
                 ? CircleAvatar(

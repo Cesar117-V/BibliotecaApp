@@ -223,6 +223,7 @@ class _EdicionLibroState extends State<EdicionLibro> {
           stock: 1,
           numAdquisicion: _adquisicionControllers[i].text,
           cantidadEjemplares: 1,
+          disponible: true,
         );
 
         await Dao.createLibro(libro);

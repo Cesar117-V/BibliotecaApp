@@ -5,6 +5,9 @@ import 'package:biblioteca_app/modelo/prestamo.dart';
 import 'package:biblioteca_app/modelo/bibliotecario.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:biblioteca_app/modelo/devolucion.dart';
+import 'package:biblioteca_app/modelo/detalleprestamo.dart';
+import 'package:flutter/foundation.dart';
 
 class Dao {
   static Database? _database;
@@ -16,11 +19,9 @@ class Dao {
   }
 
   static Future<Database> _initDB(String filePath) async {
-    final databasePath = await databaseFactory
-        .getDatabasesPath(); // ✅ para compatibilidad multiplataforma
+    final databasePath = await databaseFactory.getDatabasesPath();
     final path = join(databasePath, filePath);
     return await databaseFactory.openDatabase(
-      // ✅ usa databaseFactory según plataforma
       path,
       options: OpenDatabaseOptions(
         version: 7,
@@ -65,6 +66,7 @@ class Dao {
         stock INTEGER NOT NULL DEFAULT 0,
         num_adquisicion TEXT NOT NULL,
         cantidad_ejemplares INTEGER NOT NULL,
+        disponible INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY (id_categoria) REFERENCES categorias (id),
         FOREIGN KEY (id_autor) REFERENCES autores (id)
       )
@@ -73,16 +75,18 @@ class Dao {
     await db.execute("""
       CREATE TABLE prestamos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        no_control TEXT NOT NULL,
+        matricula TEXT NOT NULL,
         nombre_solicitante TEXT NOT NULL,
         carrera TEXT NOT NULL,
-        sexo TEXT NOT NULL,
-        num_libros INTEGER NOT NULL,
+        cantidad_libros INTEGER NOT NULL,
+        numero_clasificador TEXT NOT NULL,
+        trabajador TEXT NOT NULL,
         fecha_prestamo TEXT,
-        fecha_AcordadaDevolucion TEXT NOT NULL,
-        responsable_entrega INTEGER NOT NULL,
-        FOREIGN KEY (responsable_entrega) REFERENCES usuarios (id)
+        fecha_devolucion TEXT NOT NULL,
+        observaciones TEXT,
+        activo INTEGER NOT NULL DEFAULT 1       
       )
+
     """);
 
     await db.execute("""
@@ -124,16 +128,30 @@ class Dao {
     """);
 
     await db.execute("""
-  CREATE TABLE bibliotecarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    apellidos TEXT NOT NULL,
-    matricula TEXT NOT NULL,
-    carrera TEXT NOT NULL,
-    correo TEXT NOT NULL UNIQUE,
-    codigo TEXT NOT NULL
-  )
+      CREATE TABLE bibliotecarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        apellidos TEXT NOT NULL,
+        matricula TEXT NOT NULL,
+        carrera TEXT NOT NULL,
+        correo TEXT NOT NULL UNIQUE,
+        codigo TEXT NOT NULL
+      )
 """);
+
+    await db.execute("""
+      CREATE TABLE historial_prestamos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_prestamo INTEGER NOT NULL,
+        titulo TEXT NOT NULL,
+        no_adquisicion TEXT NOT NULL,
+        clasificacion TEXT NOT NULL,
+        autor TEXT NOT NULL,
+        fecha_devolucion TEXT NOT NULL,
+        nombre_solicitante TEXT NOT NULL,
+        matricula TEXT NOT NULL
+      )
+    """);
   }
 
   // --------------------- AUTORES ---------------------
@@ -232,6 +250,54 @@ class Dao {
     return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
   }
 
+  static Future<List<Libro>> obtenerLibrosDisponibles() async {
+    final db = await database;
+
+    // 1. Obtener todos los libros
+    final librosTotales = await db.query('libros');
+
+    // 2. Obtener conteo de ejemplares prestados por id_libro
+    final prestamos = await db.rawQuery('''
+      SELECT id_libro, COUNT(*) as cantidad
+      FROM detalleprestamos dp
+      JOIN prestamos p ON p.id = dp.id_prestamo
+      GROUP BY id_libro
+    ''');
+
+    // 3. Mapear los libros prestados
+    final Map<int, int> enPrestamo = {
+      for (var p in prestamos) p['id_libro'] as int: p['cantidad'] as int
+    };
+
+    // 4. Filtrar libros con ejemplares disponibles
+    final disponibles = <Libro>[];
+
+    for (var json in librosTotales) {
+      final libro = Libro.fromJson(json);
+      final prestados = enPrestamo[libro.id] ?? 0;
+
+      final disponiblesStock = (libro.stock ?? 0) - prestados;
+
+      if (disponiblesStock > 0) {
+        libro.stock = disponiblesStock;
+        disponibles.add(libro);
+      }
+    }
+
+    return disponibles;
+  }
+
+  static Future<List<Libro>> obtenerEjemplaresDisponiblesPorTitulo(
+      String titulo) async {
+    final db = await database;
+    final maps = await db.query(
+      'libros',
+      where: 'titulo = ? AND disponible = 1',
+      whereArgs: [titulo],
+    );
+    return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
+  }
+
   // --------------------- PRÉSTAMOS ---------------------
   static Future<Prestamo> createPrestamo(Prestamo prestamo) async {
     final db = await database;
@@ -257,19 +323,172 @@ class Dao {
 
   static Future<List<Prestamo>> listaPrestamos() async {
     final db = await database;
-    final maps = await db.query('prestamos');
-    return List.generate(maps.length, (i) => Prestamo.fromJson(maps[i]));
+
+    final result = await db.rawQuery('''
+      SELECT p.*,
+        GROUP_CONCAT(dp.titulo, ', ') AS titulo_libro
+      FROM prestamos p
+      LEFT JOIN detalleprestamos dp ON dp.id_prestamo = p.id
+      GROUP BY p.id
+    ''');
+
+    return List.generate(result.length, (i) => Prestamo.fromJson(result[i]));
+  }
+
+  static Future<List<Prestamo>> obtenerPrestamosActivos() async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT p.*,
+            GROUP_CONCAT(dp.titulo, ', ') AS titulo_libro
+      FROM prestamos p
+      LEFT JOIN detalleprestamos dp ON dp.id_prestamo = p.id
+      WHERE p.activo = 1
+      GROUP BY p.id
+    ''');
+    return List.generate(result.length, (i) => Prestamo.fromJson(result[i]));
+  }
+
+  static Future<void> restaurarStockPorPrestamo(int idPrestamo) async {
+    final db = await database;
+
+    final detalles = await db.query(
+      'detalleprestamos',
+      where: 'id_prestamo = ?',
+      whereArgs: [idPrestamo],
+    );
+
+    for (var detalle in detalles) {
+      final idLibro = detalle['id_libro'] as int;
+
+      // Aumentar el stock al devolver
+      await db.rawUpdate('''
+        UPDATE libros
+        SET stock = 
+          CASE 
+            WHEN stock + 1 > cantidad_ejemplares THEN cantidad_ejemplares 
+            ELSE stock + 1 
+          END
+        WHERE id = ?
+      ''', [idLibro]);
+    }
+  }
+
+  // --------------------- DETALLE DE PRÉSTAMOS ---------------------
+
+  static Future<DetallePrestamo> createDetallePrestamo(
+      DetallePrestamo d) async {
+    final db = await database;
+
+    final id = await db.insert('detalleprestamos', d.toJson());
+    d.id = id;
+
+    debugPrint("📚 Marcando como no disponible: idLibro=${d.idLibro}");
+
+    final rows = await db.update(
+      'libros',
+      {'disponible': 0},
+      where: 'id = ?',
+      whereArgs: [d.idLibro],
+    );
+
+    debugPrint("🟡 Filas afectadas en libros: $rows");
+
+    return d;
+  }
+
+  static Future<List<DetallePrestamo>> getDetallesPorPrestamo(
+      int idPrestamo) async {
+    final db = await database;
+    final maps = await db.query(
+      'detalleprestamos',
+      where: 'id_prestamo = ?',
+      whereArgs: [idPrestamo],
+    );
+    return List.generate(maps.length, (i) => DetallePrestamo.fromJson(maps[i]));
+  }
+
+  static Future<void> eliminarDetallePrestamoPorIdPrestamo(
+      int idPrestamo) async {
+    final db = await database;
+    await db.delete(
+      'detalleprestamos',
+      where: 'id_prestamo = ?',
+      whereArgs: [idPrestamo],
+    );
+  }
+
+  // --------------------- DEVOLUCIONES ---------------------
+  static Future<Devolucion> createDevolucion(Devolucion d) async {
+    final db = await database;
+    final id = await db.insert('devoluciones', d.toJson());
+    d.id = id;
+    return d;
+  }
+
+  static Future<int> updateDevolucion(Devolucion d) async {
+    final db = await database;
+    return await db.update(
+      'devoluciones',
+      d.toJson(),
+      where: 'id = ?',
+      whereArgs: [d.id],
+    );
+  }
+
+  static Future<int> deleteDevolucion(int id) async {
+    final db = await database;
+    return await db.delete('devoluciones', where: 'id = ?', whereArgs: [id]);
+  }
+
+  static Future<List<Devolucion>> listaDevoluciones() async {
+    final db = await database;
+    final maps = await db.query('devoluciones');
+    return List.generate(maps.length, (i) => Devolucion.fromJson(maps[i]));
+  }
+
+  static Future<void> liberarLibrosPorDevolucion(int idPrestamo) async {
+    final db = await database;
+
+    final detalles = await db.query(
+      'detalleprestamos',
+      where: 'id_prestamo = ?',
+      whereArgs: [idPrestamo],
+    );
+
+    for (var detalle in detalles) {
+      final idLibro = detalle['id_libro'] as int;
+
+      // Restaurar stock (por si también lo usas)
+      await db.rawUpdate('''
+        UPDATE libros
+        SET stock = 
+          CASE 
+            WHEN stock + 1 > cantidad_ejemplares THEN cantidad_ejemplares 
+            ELSE stock + 1 
+          END
+        WHERE id = ?
+      ''', [idLibro]);
+
+      // ⚠️ MARCAR COMO DISPONIBLE
+      await db.update(
+        'libros',
+        {'disponible': 1},
+        where: 'id = ?',
+        whereArgs: [idLibro],
+      );
+    }
   }
 
   // --------------------- BIBLIOTECARIOS ---------------------
-// LISTA
+
+  // LISTA
   static Future<List<Bibliotecario>> listaBibliotecarios() async {
     final db = await database;
     final maps = await db.query('bibliotecarios');
     return List.generate(maps.length, (i) => Bibliotecario.fromJson(maps[i]));
   }
 
-// CREAR
+  // CREAR
   static Future<Bibliotecario> createBibliotecario(Bibliotecario b) async {
     final db = await database;
     final id = await db.insert('bibliotecarios', b.toJson());
@@ -277,7 +496,7 @@ class Dao {
     return b;
   }
 
-// ACTUALIZAR
+  // ACTUALIZAR
   static Future<int> updateBibliotecario(Bibliotecario b) async {
     final db = await database;
     return await db.update(
@@ -288,13 +507,13 @@ class Dao {
     );
   }
 
-// ELIMINAR
+  // ELIMINAR
   static Future<int> deleteBibliotecario(int id) async {
     final db = await database;
     return await db.delete('bibliotecarios', where: 'id = ?', whereArgs: [id]);
   }
 
-//validar bibliotecario
+  // Validar bibliotecario (para login)
   static Future<bool> validarBibliotecario(String correo, String codigo) async {
     final db = await database;
     final result = await db.query(
@@ -303,5 +522,115 @@ class Dao {
       whereArgs: [correo, codigo],
     );
     return result.isNotEmpty;
+  }
+
+  // Obtener un bibliotecario por correo y código
+  static Future<Bibliotecario?> obtenerBibliotecario(
+      String correo, String codigo) async {
+    final db = await database;
+    final maps = await db.query(
+      'bibliotecarios',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+
+    if (maps.isNotEmpty) {
+      return Bibliotecario.fromJson(maps.first);
+    } else {
+      return null;
+    }
+  }
+
+  // --------------------- HISTORIAL DE PRÉSTAMOS ---------------------
+  static Future<void> guardarHistorialPrestamo(
+      int idPrestamo, String fechaDevolucion) async {
+    final db = await database;
+
+    try {
+      // Obtener info del préstamo principal
+      final prestamo = await db.query(
+        'prestamos',
+        where: 'id = ?',
+        whereArgs: [idPrestamo],
+        limit: 1,
+      );
+
+      if (prestamo.isEmpty) {
+        debugPrint("❌ No se encontró el préstamo con ID $idPrestamo");
+        return;
+      }
+
+      final nombreSolicitante =
+          prestamo[0]['nombre_solicitante'] ?? 'Desconocido';
+      final matricula = prestamo[0]['matricula'] ?? 'N/A';
+
+      // Obtener los detalles del préstamo
+      final detalles = await db.query(
+        'detalleprestamos',
+        where: 'id_prestamo = ?',
+        whereArgs: [idPrestamo],
+      );
+
+      if (detalles.isEmpty) {
+        debugPrint(
+            "⚠️ No se encontraron detalles para el préstamo con ID $idPrestamo");
+        return;
+      }
+
+      for (var d in detalles) {
+        final titulo = d['titulo'];
+        final noAdquisicion = d['no_adquisicion'];
+        final clasificacion = d['clasificacion'];
+        final autor = d['autor'];
+
+        if ([titulo, noAdquisicion, clasificacion, autor]
+            .any((e) => e == null)) {
+          debugPrint("⚠️ Datos incompletos: $d");
+          continue;
+        }
+
+        final insertData = {
+          'id_prestamo': idPrestamo,
+          'titulo': titulo,
+          'no_adquisicion': noAdquisicion,
+          'clasificacion': clasificacion,
+          'autor': autor,
+          'fecha_devolucion': fechaDevolucion,
+          'nombre_solicitante': nombreSolicitante,
+          'matricula': matricula,
+        };
+
+        await db.insert('historial_prestamos', insertData);
+        debugPrint("✅ Historial guardado: $insertData");
+      }
+    } catch (e) {
+      debugPrint("❌ Error inesperado en guardarHistorialPrestamo: $e");
+    }
+  }
+
+  static Future<void> updatePrestamoActivo(int idPrestamo, bool activo) async {
+    final db = await database;
+    await db.update(
+      'prestamos',
+      {'activo': activo ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [idPrestamo],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerHistorialPrestamos() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT 
+        id_prestamo,
+        titulo,
+        nombre_solicitante,
+        matricula,
+        fecha_devolucion,
+        COUNT(*) as cantidad_ejemplares
+      FROM historial_prestamos
+      GROUP BY id_prestamo
+      ORDER BY fecha_devolucion DESC
+    ''');
   }
 }
