@@ -29,20 +29,20 @@ class ListaPrestamos extends StatefulWidget {
   const ListaPrestamos({Key? key}) : super(key: key);
 
   @override
-  State<ListaPrestamos> createState() => _ListaPrestamosState();
+  State<ListaPrestamos> createState() => ListaPrestamosState();
 }
 
-class _ListaPrestamosState extends State<ListaPrestamos>
+class ListaPrestamosState extends State<ListaPrestamos>
     with AutomaticKeepAliveClientMixin {
   List<Prestamo> _prestamos = [];
 
   @override
   void initState() {
     super.initState();
-    _cargarPrestamos();
+    cargarDatos();
   }
 
-  Future<void> _cargarPrestamos() async {
+  Future<void> cargarDatos() async {
     final prestamos = await Dao.obtenerPrestamosActivos();
     if (!mounted) return;
     setState(() {
@@ -108,7 +108,7 @@ class _ListaPrestamosState extends State<ListaPrestamos>
                             ),
                           );
                           if (!mounted) return;
-                          if (result == true) await _cargarPrestamos();
+                          if (result == true) await cargarDatos();
                         },
                       ),
                       IconButton(
@@ -124,7 +124,7 @@ class _ListaPrestamosState extends State<ListaPrestamos>
                                 prestamo.id!);
                             await Dao.deletePrestamo(prestamo.id!);
                             if (!mounted) return;
-                            await _cargarPrestamos();
+                            await cargarDatos();
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

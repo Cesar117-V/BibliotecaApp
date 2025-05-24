@@ -28,21 +28,24 @@ class ListaCategorias extends StatefulWidget {
   const ListaCategorias({Key? key}) : super(key: key);
 
   @override
-  _ListaCategoriasState createState() => _ListaCategoriasState();
+  ListaCategoriasState createState() => ListaCategoriasState();
 }
 
-class _ListaCategoriasState extends State<ListaCategorias> {
+class ListaCategoriasState extends State<ListaCategorias> {
   List<Categoria> _categorias = [];
 
   @override
   void initState() {
     super.initState();
-    _cargarCategorias();
+    cargarDatos();
   }
 
-  Future<void> _cargarCategorias() async {
-    _categorias = await Dao.listaCategorias();
-    setState(() {});
+  Future<void> cargarDatos() async {
+    final categorias = await Dao.listaCategorias();
+    if (!mounted) return;
+    setState(() {
+      _categorias = categorias;
+    });
   }
 
   Future<void> _editarCategoria([Categoria? categoria]) async {
@@ -53,8 +56,8 @@ class _ListaCategoriasState extends State<ListaCategorias> {
       ),
     );
 
-    if (resultado == true) {
-      _cargarCategorias();
+    if (resultado == true && mounted) {
+      await cargarDatos();
     }
   }
 
@@ -82,7 +85,7 @@ class _ListaCategoriasState extends State<ListaCategorias> {
                 );
                 if (confirmar) {
                   await Dao.deleteCategoria(categoria.id!);
-                  _cargarCategorias();
+                  if (mounted) await cargarDatos();
                 }
               },
             ),

@@ -28,21 +28,24 @@ class ListaAutores extends StatefulWidget {
   const ListaAutores({Key? key}) : super(key: key);
 
   @override
-  _ListaAutoresState createState() => _ListaAutoresState();
+  ListaAutoresState createState() => ListaAutoresState();
 }
 
-class _ListaAutoresState extends State<ListaAutores> {
+class ListaAutoresState extends State<ListaAutores> {
   List<Autor> _autores = [];
 
   @override
   void initState() {
     super.initState();
-    _cargarAutores();
+    cargarDatos();
   }
 
-  Future<void> _cargarAutores() async {
-    _autores = await Dao.listaAutores();
-    setState(() {});
+  Future<void> cargarDatos() async {
+    final autores = await Dao.listaAutores();
+    if (!mounted) return;
+    setState(() {
+      _autores = autores;
+    });
   }
 
   Future<void> _editarAutor([Autor? autor]) async {
@@ -50,8 +53,8 @@ class _ListaAutoresState extends State<ListaAutores> {
       context,
       MaterialPageRoute(builder: (_) => EdicionAutor(autor: autor)),
     );
-    if (resultado == true) {
-      _cargarAutores();
+    if (resultado == true && mounted) {
+      await cargarDatos();
     }
   }
 
@@ -78,7 +81,7 @@ class _ListaAutoresState extends State<ListaAutores> {
                 );
                 if (confirmar) {
                   await Dao.deleteAutor(autor.id!);
-                  _cargarAutores();
+                  if (mounted) await cargarDatos();
                 }
               },
             ),
