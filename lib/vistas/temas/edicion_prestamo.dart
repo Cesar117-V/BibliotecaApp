@@ -157,7 +157,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Préstamo guardado exitosamente')),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
 

@@ -15,15 +15,15 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
   late TabController _tabController;
   int _activeIndex = 0;
 
-  final List<Widget> _views = const [
-    ListaPrestamos(key: PageStorageKey('activos')),
-    ListaPrestamosHistorial(key: PageStorageKey('historial')),
-  ];
+  final GlobalKey<ListaPrestamosState> prestamosKey =
+      GlobalKey<ListaPrestamosState>();
+
+  late final List<Widget> _views;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _views.length, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         setState(() {
@@ -31,6 +31,11 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
         });
       }
     });
+
+    _views = [
+      ListaPrestamos(key: prestamosKey),
+      const ListaPrestamosHistorial(key: PageStorageKey('historial')),
+    ];
   }
 
   @override
@@ -44,16 +49,18 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
       return FloatingActionButton(
         heroTag: 'fabPrestamos',
         onPressed: () async {
-          await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const EdicionPrestamo()),
           );
-          setState(() {}); // recarga la pestaña activa
+          if (result == true) {
+            prestamosKey.currentState?.cargarDatos(); // ✅ recarga automática
+          }
         },
         child: const Icon(Icons.add),
       );
     }
-    return null; // no mostrar FAB en historial
+    return null; // No mostrar FAB en historial
   }
 
   @override

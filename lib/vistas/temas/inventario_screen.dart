@@ -5,7 +5,6 @@ import 'package:biblioteca_app/vistas/temas/lista_autores.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_libro.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_autor.dart';
-import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
 
 class InventarioScreen extends StatefulWidget {
   const InventarioScreen({super.key});
@@ -20,11 +19,15 @@ class _InventarioScreenState extends State<InventarioScreen>
   int _activeIndex = 0;
 
   final GlobalKey<ListaLibrosState> librosKey = GlobalKey<ListaLibrosState>();
+  final GlobalKey<ListaCategoriasState> categoriasKey =
+      GlobalKey<ListaCategoriasState>();
+  final GlobalKey<ListaAutoresState> autoresKey =
+      GlobalKey<ListaAutoresState>();
 
   late final List<Widget> _views = [
     ListaLibros(key: librosKey),
-    const ListaCategorias(key: PageStorageKey('categorias')),
-    const ListaAutores(key: PageStorageKey('autores')),
+    ListaCategorias(key: categoriasKey),
+    ListaAutores(key: autoresKey),
   ];
 
   @override
@@ -46,16 +49,6 @@ class _InventarioScreenState extends State<InventarioScreen>
     super.dispose();
   }
 
-  Widget _buildTabContent() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: _views[_activeIndex],
-    );
-  }
-
   Widget? _buildFloatingButton() {
     return FloatingActionButton(
       onPressed: () async {
@@ -67,27 +60,30 @@ class _InventarioScreenState extends State<InventarioScreen>
               context,
               MaterialPageRoute(builder: (_) => const EdicionLibro()),
             );
+            if (result == true) {
+              librosKey.currentState?.cargarDatos();
+            }
             break;
+
           case 1:
             result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EdicionCategoria()),
             );
+            if (result == true) {
+              categoriasKey.currentState?.cargarDatos();
+            }
             break;
+
           case 2:
             result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EdicionAutor()),
             );
+            if (result == true) {
+              autoresKey.currentState?.cargarDatos();
+            }
             break;
-        }
-
-        if (result == true) {
-          setState(() {}); // Refresca la vista activa
-          if (_activeIndex == 0) {
-            librosKey.currentState
-                ?.cargarLibros(); // Asegúrate de que sea pública
-          }
         }
       },
       child: const Icon(Icons.add),
@@ -115,7 +111,10 @@ class _InventarioScreenState extends State<InventarioScreen>
       body: Container(
         color: Colors.grey[100],
         padding: const EdgeInsets.all(8),
-        child: _buildTabContent(),
+        child: IndexedStack(
+          index: _activeIndex,
+          children: _views,
+        ),
       ),
       floatingActionButton: _buildFloatingButton(),
     );

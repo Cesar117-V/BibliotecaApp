@@ -38,10 +38,10 @@ class ListaLibrosState extends State<ListaLibros> {
   @override
   void initState() {
     super.initState();
-    cargarLibros();
+    cargarDatos();
   }
 
-  Future<void> cargarLibros() async {
+  Future<void> cargarDatos() async {
     final libros = await Dao.listaLibros();
     final agrupados = <String, List<Libro>>{};
 
@@ -64,15 +64,11 @@ class ListaLibrosState extends State<ListaLibros> {
       MaterialPageRoute(builder: (_) => EdicionLibro(libro: libro)),
     );
     if (result == true && mounted) {
-      cargarLibros();
+      await cargarDatos();
     }
   }
 
   void _mostrarEjemplaresModal(List<Libro> libros) {
-    for (var l in libros) {
-      debugPrint("Libro: ${l.numAdquisicion}, disponible: ${l.disponible}");
-    }
-
     final disponibles = libros.where((l) => l.disponible ?? true).toList();
 
     if (disponibles.isEmpty) {
@@ -110,7 +106,7 @@ class ListaLibrosState extends State<ListaLibros> {
                   if (confirmar) {
                     await Dao.deleteLibro(libro.id!);
                     if (mounted) Navigator.pop(context);
-                    cargarLibros();
+                    await cargarDatos();
                   }
                 },
               ),
@@ -136,7 +132,8 @@ class ListaLibrosState extends State<ListaLibros> {
         return Card(
           child: ListTile(
             title: Text(
-                "$titulo (${libros.where((l) => l.disponible ?? true).length} disponibles)"),
+              "$titulo (${libros.where((l) => l.disponible ?? true).length} disponibles)",
+            ),
             subtitle: Text("Páginas: ${libros.first.numeroPaginas ?? 0}"),
             leading: libros.first.imagen != null
                 ? CircleAvatar(
