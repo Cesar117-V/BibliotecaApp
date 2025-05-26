@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:biblioteca_app/modelo/devolucion.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
 
@@ -11,7 +10,7 @@ class ListaDevoluciones extends StatefulWidget {
 }
 
 class _ListaDevolucionesState extends State<ListaDevoluciones> {
-  List<Devolucion> lista = [];
+  List<Map<String, dynamic>> lista = [];
 
   @override
   void initState() {
@@ -20,7 +19,7 @@ class _ListaDevolucionesState extends State<ListaDevoluciones> {
   }
 
   Future<void> cargarDatos() async {
-    final datos = await Dao.listaDevoluciones();
+    final datos = await Dao.listaDevolucionesConPrestamo();
     if (!mounted) return;
     setState(() {
       lista = datos;
@@ -64,12 +63,17 @@ class _ListaDevolucionesState extends State<ListaDevoluciones> {
                 final d = lista[index];
                 return ListTile(
                   leading: const Icon(Icons.assignment_turned_in),
-                  title: Text("Entrega: ${d.fechaEntregaReal}"),
+                  title: Text(
+                    "Usuario: ${d['nombre_solicitante'] ?? '-'}\n"
+                    "Matrícula: ${d['matricula'] ?? '-'}",
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Estado del libro: ${d.estadoLibro}"),
-                      Text("Responsable: ${d.responsableDevolucion}"),
+                      Text("Libros: ${d['titulos_libros'] ?? 'Sin libros'}"),
+                      Text("Estado del libro: ${d['estado_libro'] ?? '-'}"),
+                      Text("Responsable: ${d['responsable_devolucion'] ?? '-'}"),
+                      Text("Entrega: ${d['fecha_EntregaReal'] ?? '-'}"),
                     ],
                   ),
                   trailing: Row(
@@ -78,10 +82,13 @@ class _ListaDevolucionesState extends State<ListaDevoluciones> {
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () async {
+                          // Aquí deberías reconstruir el objeto Devolucion si lo necesitas
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => EdicionDevolucion(devolucion: d),
+                              builder: (_) => EdicionDevolucion(
+                                devolucion: null, // O reconstruye el objeto si lo necesitas
+                              ),
                             ),
                           );
                           cargarDatos();
@@ -89,7 +96,7 @@ class _ListaDevolucionesState extends State<ListaDevoluciones> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _eliminar(d.id!),
+                        onPressed: () => _eliminar(d['id'] as int),
                       ),
                     ],
                   ),

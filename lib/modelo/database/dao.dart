@@ -78,6 +78,7 @@ class Dao {
         matricula TEXT NOT NULL,
         nombre_solicitante TEXT NOT NULL,
         carrera TEXT NOT NULL,
+        sexo TEXT NOT NULL,
         cantidad_libros INTEGER NOT NULL,
         numero_clasificador TEXT NOT NULL,
         trabajador TEXT NOT NULL,
@@ -86,7 +87,6 @@ class Dao {
         observaciones TEXT,
         activo INTEGER NOT NULL DEFAULT 1       
       )
-
     """);
 
     await db.execute("""
@@ -96,34 +96,23 @@ class Dao {
         id_libro INTEGER NOT NULL,
         titulo TEXT NOT NULL,
         no_adquisicion TEXT NOT NULL,
-        clasificacion TEXT NOT NULL,
+        categoria TEXT NOT NULL,
         autor TEXT NOT NULL,
         FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
         FOREIGN KEY (id_libro) REFERENCES libros (id)
       )
     """);
 
-    await db.execute("""
-      CREATE TABLE usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        apellidos TEXT NOT NULL,
-        correo TEXT NOT NULL,
-        TipoUsuario TEXT NOT NULL,
-        contrasena TEXT NOT NULL
-      )
-    """);
-
+   
     await db.execute("""
       CREATE TABLE devoluciones (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_prestamo INTEGER NOT NULL,
         fecha_EntregaReal TEXT NOT NULL,
         estado_libro TEXT,
-        responsable_devolucion INTEGER NOT NULL,
+        responsable_devolucion TEXT NOT NULL,
         observaciones TEXT,
-        FOREIGN KEY (id_prestamo) REFERENCES prestamos (id),
-        FOREIGN KEY (responsable_devolucion) REFERENCES usuarios (id)
+        FOREIGN KEY (id_prestamo) REFERENCES prestamos (id)
       )
     """);
 
@@ -145,7 +134,7 @@ class Dao {
         id_prestamo INTEGER NOT NULL,
         titulo TEXT NOT NULL,
         no_adquisicion TEXT NOT NULL,
-        clasificacion TEXT NOT NULL,
+        categoria TEXT NOT NULL,
         autor TEXT NOT NULL,
         fecha_devolucion TEXT NOT NULL,
         nombre_solicitante TEXT NOT NULL,
@@ -247,6 +236,18 @@ class Dao {
   static Future<List<Libro>> listaLibros() async {
     final db = await database;
     final maps = await db.query('libros');
+    return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
+  }
+
+  static Future<List<Libro>> listaLibrosPorCategoria({int? idCategoria}) async {
+    final db = await database;
+    final where = idCategoria != null ? 'id_categoria = ?' : null;
+    final whereArgs = idCategoria != null ? [idCategoria] : null;
+    final maps = await db.query(
+      'libros',
+      where: where,
+      whereArgs: whereArgs,
+    );
     return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
   }
 
@@ -458,7 +459,7 @@ class Dao {
     for (var detalle in detalles) {
       final idLibro = detalle['id_libro'] as int;
 
-      // Restaurar stock (por si también lo usas)
+      // Restaurar stock al devolver
       await db.rawUpdate('''
         UPDATE libros
         SET stock = 
@@ -580,11 +581,10 @@ class Dao {
       for (var d in detalles) {
         final titulo = d['titulo'];
         final noAdquisicion = d['no_adquisicion'];
-        final clasificacion = d['clasificacion'];
+        final categoria = d['categoria'];
         final autor = d['autor'];
 
-        if ([titulo, noAdquisicion, clasificacion, autor]
-            .any((e) => e == null)) {
+        if ([titulo, noAdquisicion, categoria, autor].any((e) => e == null)) {
           debugPrint("⚠️ Datos incompletos: $d");
           continue;
         }
@@ -593,7 +593,7 @@ class Dao {
           'id_prestamo': idPrestamo,
           'titulo': titulo,
           'no_adquisicion': noAdquisicion,
-          'clasificacion': clasificacion,
+          'categoria': categoria,
           'autor': autor,
           'fecha_devolucion': fechaDevolucion,
           'nombre_solicitante': nombreSolicitante,
@@ -618,19 +618,35 @@ class Dao {
     );
   }
 
-  static Future<List<Map<String, dynamic>>> obtenerHistorialPrestamos() async {
-    final db = await database;
-    return await db.rawQuery('''
-      SELECT 
-        id_prestamo,
-        titulo,
-        nombre_solicitante,
-        matricula,
-        fecha_devolucion,
-        COUNT(*) as cantidad_ejemplares
-      FROM historial_prestamos
-      GROUP BY id_prestamo
-      ORDER BY fecha_devolucion DESC
-    ''');
-  }
+static Future<List<Map<String, dynamic>>> listaDevolucionesConPrestamo() async {
+  final db = await database;
+  return await db.rawQuery('''
+    SELECT d.*, 
+           p.nombre_solicitante, 
+           p.matricula,
+           GROUP_CONCAT(l.titulo, ', ') as titulos_libros
+    FROM devoluciones d
+    JOIN prestamos p ON d.id_prestamo = p.id
+    LEFT JOIN detalleprestamos dp ON dp.id_prestamo = p.id
+    LEFT JOIN libros l ON l.id = dp.id_libro
+    GROUP BY d.id
+    ORDER BY d.id DESC
+  ''');
 }
+
+static Future<List<Map<String, dynamic>>> obtenerHistorialPrestamosExtendido() async {
+  final db = await database;
+  return await db.rawQuery('''
+   SELECT h.*, 
+       p.trabajador AS nombre_trabajador, 
+       d.estado_libro, 
+       d.responsable_devolucion
+FROM historial_prestamos h
+LEFT JOIN prestamos p ON h.id_prestamo = p.id
+LEFT JOIN devoluciones d ON h.id_prestamo = d.id_prestamo
+ORDER BY h.fecha_devolucion DESC
+  ''');
+}
+
+
+} 

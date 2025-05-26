@@ -4,7 +4,7 @@ class DetallePrestamo {
   int idLibro;
   String titulo;
   String noAdquisicion;
-  String clasificacion;
+  String categoria;
   String autor;
 
   DetallePrestamo({
@@ -13,7 +13,7 @@ class DetallePrestamo {
     required this.idLibro,
     required this.titulo,
     required this.noAdquisicion,
-    required this.clasificacion,
+    required this.categoria,
     required this.autor,
   });
 
@@ -24,7 +24,7 @@ class DetallePrestamo {
       idLibro: json['id_libro'],
       titulo: json['titulo'],
       noAdquisicion: json['no_adquisicion'],
-      clasificacion: json['clasificacion'],
+      categoria: json['categoria'],
       autor: json['autor'],
     );
   }
@@ -36,7 +36,7 @@ class DetallePrestamo {
       'id_libro': idLibro,
       'titulo': titulo,
       'no_adquisicion': noAdquisicion,
-      'clasificacion': clasificacion,
+      'categoria': categoria,
       'autor': autor,
     };
   }

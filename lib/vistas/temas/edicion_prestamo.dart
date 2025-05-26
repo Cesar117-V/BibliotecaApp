@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/prestamo.dart';
 import 'package:biblioteca_app/modelo/libro.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
+import 'package:biblioteca_app/modelo/autor.dart';
+import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/util/sesion_usuario.dart';
+import 'package:biblioteca_app/vistas/seleccion_libros.dart';
 
 class EdicionPrestamo extends StatefulWidget {
   final Prestamo? prestamo;
@@ -17,21 +20,12 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController matriculaController = TextEditingController();
-  final TextEditingController nombreSolicitanteController =
-      TextEditingController();
-  final TextEditingController cantidadLibrosController =
-      TextEditingController();
-  final TextEditingController numeroClasificadorController =
-      TextEditingController();
+  final TextEditingController nombreSolicitanteController = TextEditingController();
   final TextEditingController trabajadorController = TextEditingController();
   final TextEditingController observacionesController = TextEditingController();
 
   DateTime? fechaDevolucion;
   DateTime? fechaPrestamo;
-
-  List<Libro> librosDisponibles = [];
-  List<Libro> librosOriginales = [];
-  Libro? libroSeleccionado;
 
   final List<String> carreras = [
     'INGENIERIA INFORMATICA',
@@ -43,36 +37,29 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
 
   String? carreraSeleccionada;
 
+  final List<String> generos = ['Hombre', 'Mujer'];
+  String? generoSeleccionado;
+
+  int? cantidadSeleccionada;
+  List<Libro> librosSeleccionados = [];
+
+  Map<int, String> mapAutores = {};
+  Map<int, String> mapCategorias = {};
+
   @override
   void initState() {
     super.initState();
     trabajadorController.text = SesionUsuario.nombre;
 
-    Dao.obtenerLibrosDisponibles().then((libros) {
-      librosOriginales = libros;
-
-      final Map<String, Libro> agrupados = {};
-      for (var libro in libros) {
-        final key = libro.titulo ?? '';
-        if (!agrupados.containsKey(key)) {
-          agrupados[key] = Libro(
-            id: libro.id,
-            titulo: libro.titulo,
-            numAdquisicion: libro.numAdquisicion,
-            cantidadEjemplares: libro.cantidadEjemplares ?? 1,
-            stock: libro.stock ?? 1,
-          );
-        } else {
-          agrupados[key]!.stock =
-              (agrupados[key]!.stock ?? 0) + (libro.stock ?? 1);
-          agrupados[key]!.cantidadEjemplares =
-              (agrupados[key]!.cantidadEjemplares ?? 0) +
-                  (libro.cantidadEjemplares ?? 1);
-        }
-      }
-
+    Future.wait([
+      Dao.listaAutores(),
+      Dao.listaCategorias(),
+    ]).then((results) {
+      final autores = results[0] as List<Autor>;
+      final categorias = results[1] as List<Categoria>;
       setState(() {
-        librosDisponibles = agrupados.values.toList();
+        mapAutores = { for (var a in autores) a.id!: a.nombre! };
+        mapCategorias = { for (var c in categorias) c.id!: c.nombre! };
       });
     });
 
@@ -81,12 +68,13 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       matriculaController.text = p.matricula;
       nombreSolicitanteController.text = p.nombreSolicitante;
       carreraSeleccionada = p.carrera;
-      cantidadLibrosController.text = p.cantidadLibros.toString();
-      numeroClasificadorController.text = p.numeroClasificador ?? '';
       trabajadorController.text = p.trabajador;
       observacionesController.text = p.observaciones;
       fechaDevolucion = DateTime.tryParse(p.fechaDevolucion);
       fechaPrestamo = DateTime.tryParse(p.fechaPrestamo ?? '');
+      generoSeleccionado = p.sexo;
+      cantidadSeleccionada = p.cantidadLibros;
+      // Si quieres cargar los libros seleccionados al editar, deberías obtenerlos de la base de datos
     }
   }
 
@@ -94,22 +82,47 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
   void dispose() {
     matriculaController.dispose();
     nombreSolicitanteController.dispose();
-    cantidadLibrosController.dispose();
-    numeroClasificadorController.dispose();
     trabajadorController.dispose();
     observacionesController.dispose();
     super.dispose();
   }
 
+  Future<void> _irASeleccionLibros() async {
+    if (cantidadSeleccionada == null) return;
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SeleccionLibrosScreen(
+          cantidadMaxima: cantidadSeleccionada!,
+          librosPreseleccionados: librosSeleccionados,
+          mapAutores: mapAutores,
+          mapCategorias: mapCategorias,
+        ),
+      ),
+    );
+    if (resultado != null && resultado is List<Libro>) {
+      setState(() {
+        librosSeleccionados = resultado;
+      });
+    }
+  }
+
   void _guardarPrestamo() async {
     if (_formKey.currentState!.validate()) {
+      if (librosSeleccionados.length != (cantidadSeleccionada ?? 0)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Debes seleccionar exactamente $cantidadSeleccionada libros.')),
+        );
+        return;
+      }
       final prestamo = Prestamo(
         id: widget.prestamo?.id,
         matricula: matriculaController.text,
         nombreSolicitante: nombreSolicitanteController.text,
         carrera: carreraSeleccionada!,
-        cantidadLibros: int.parse(cantidadLibrosController.text),
-        numeroClasificador: numeroClasificadorController.text,
+        sexo: generoSeleccionado,
+        cantidadLibros: cantidadSeleccionada!,
+        numeroClasificador: librosSeleccionados.map((l) => l.numAdquisicion).join(', '),
         trabajador: trabajadorController.text,
         fechaPrestamo: fechaPrestamo?.toIso8601String(),
         fechaDevolucion: fechaDevolucion?.toIso8601String() ?? '',
@@ -121,19 +134,14 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       if (widget.prestamo == null) {
         final idPrestamo = await db.insert('prestamos', prestamo.toJson());
 
-        final ejemplaresSeleccionados = librosOriginales
-            .where((l) => l.titulo == libroSeleccionado?.titulo)
-            .take(prestamo.cantidadLibros)
-            .toList();
-
-        for (var libro in ejemplaresSeleccionados) {
+        for (var libro in librosSeleccionados) {
           await db.insert('detalleprestamos', {
             'id_prestamo': idPrestamo,
             'id_libro': libro.id,
             'titulo': libro.titulo ?? 'Sin título',
             'no_adquisicion': libro.numAdquisicion,
-            'clasificacion': 'General',
-            'autor': 'Desconocido',
+            'autor': mapAutores[libro.idAutor] ?? 'Desconocido',
+            'categoria': mapCategorias[libro.idCategoria] ?? 'Sin categoría',
           });
 
           await db.rawUpdate('''
@@ -142,7 +150,6 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
             WHERE id = ?
           ''', [libro.id]);
 
-          // 🔒 Marcar como no disponible este ejemplar
           await db.update(
             'libros',
             {'disponible': 0},
@@ -199,14 +206,12 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
               ),
               TextFormField(
                 controller: nombreSolicitanteController,
-                decoration:
-                    const InputDecoration(labelText: "Nombre del Solicitante"),
+                decoration: const InputDecoration(labelText: "Nombre del Solicitante"),
                 validator: (value) =>
                     value!.isEmpty ? 'Campo obligatorio' : null,
               ),
               DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Carrera del Solicitante"),
+                decoration: const InputDecoration(labelText: "Carrera del Solicitante"),
                 value: carreraSeleccionada,
                 items: carreras.map((carrera) {
                   return DropdownMenuItem(
@@ -223,62 +228,60 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                     ? 'Seleccione una carrera'
                     : null,
               ),
-              DropdownButtonFormField<Libro>(
-                value: libroSeleccionado,
-                decoration:
-                    const InputDecoration(labelText: 'Seleccionar Libro'),
-                items: librosDisponibles.map((libro) {
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Género"),
+                value: generoSeleccionado,
+                items: generos.map((g) {
                   return DropdownMenuItem(
-                    value: libro,
-                    child: Text(libro.titulo ?? 'Sin título'),
+                    value: g,
+                    child: Text(g),
                   );
                 }).toList(),
-                onChanged: (libro) {
+                onChanged: (value) {
                   setState(() {
-                    libroSeleccionado = libro;
-                    cantidadLibrosController.text = '';
-                    numeroClasificadorController.clear();
+                    generoSeleccionado = value;
                   });
                 },
                 validator: (value) =>
-                    value == null ? 'Seleccione un libro' : null,
+                    value == null || value.isEmpty ? 'Seleccione un género' : null,
               ),
-              if (libroSeleccionado != null)
-                DropdownButtonFormField<int>(
-                  value: int.tryParse(cantidadLibrosController.text),
-                  decoration:
-                      const InputDecoration(labelText: "Cantidad de Libros"),
-                  items: List.generate(
-                    (libroSeleccionado?.stock ?? 1),
-                    (index) => DropdownMenuItem(
-                      value: index + 1,
-                      child: Text('${index + 1}'),
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      cantidadLibrosController.text = value.toString();
-                      final ejemplares = librosOriginales
-                          .where((l) => l.titulo == libroSeleccionado?.titulo)
-                          .take(value ?? 1)
-                          .toList();
-                      final texto = ejemplares
-                          .map((e) => "ID: ${e.id}, Adq: ${e.numAdquisicion}")
-                          .join('\n');
-
-                      numeroClasificadorController.text = texto;
-                    });
-                  },
-                  validator: (value) =>
-                      value == null ? 'Seleccione una cantidad válida' : null,
+              DropdownButtonFormField<int>(
+                decoration: const InputDecoration(labelText: "Cantidad de Libros"),
+                value: cantidadSeleccionada,
+                items: List.generate(3, (i) => i + 1)
+                    .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    cantidadSeleccionada = value;
+                    librosSeleccionados = [];
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Seleccione la cantidad de libros' : null,
+              ),
+              const SizedBox(height: 10),
+              if (cantidadSeleccionada != null)
+                ElevatedButton(
+                  onPressed: _irASeleccionLibros,
+                  child: const Text('Seleccionar Libros'),
                 ),
-              TextFormField(
-                controller: numeroClasificadorController,
-                decoration: const InputDecoration(
-                    labelText: "Número del libro y clasificador"),
-                readOnly: true,
-                maxLines: 4,
-              ),
+              const SizedBox(height: 10),
+              if (librosSeleccionados.isNotEmpty)
+                ...librosSeleccionados.map((libro) => Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        title: Text(libro.titulo ?? 'Sin título'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Adquisición: ${libro.numAdquisicion ?? ''}'),
+                            Text('Autor: ${mapAutores[libro.idAutor] ?? 'Desconocido'}'),
+                            Text('Categoría: ${mapCategorias[libro.idCategoria] ?? 'Sin categoría'}'),
+                          ],
+                        ),
+                      ),
+                    )),
               TextFormField(
                 controller: trabajadorController,
                 decoration: const InputDecoration(labelText: "Trabajador"),

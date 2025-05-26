@@ -3,6 +3,7 @@ class Prestamo {
   String matricula;
   String nombreSolicitante;
   String carrera;
+  String? sexo;
   int cantidadLibros;
   String numeroClasificador;
   String trabajador;
@@ -17,6 +18,7 @@ class Prestamo {
     required this.matricula,
     required this.nombreSolicitante,
     required this.carrera,
+    this.sexo,
     required this.cantidadLibros,
     required this.numeroClasificador,
     required this.trabajador,
@@ -32,6 +34,7 @@ class Prestamo {
         'matricula': matricula,
         'nombre_solicitante': nombreSolicitante,
         'carrera': carrera,
+        'sexo': sexo,
         'cantidad_libros': cantidadLibros,
         'numero_clasificador': numeroClasificador,
         'trabajador': trabajador,
@@ -46,6 +49,7 @@ class Prestamo {
         matricula: json['matricula'],
         nombreSolicitante: json['nombre_solicitante'],
         carrera: json['carrera'] ?? '',
+        sexo: json['sexo'] ?? '',
         cantidadLibros: json['cantidad_libros'],
         numeroClasificador: json['numero_clasificador'] ?? '',
         trabajador: json['trabajador'],

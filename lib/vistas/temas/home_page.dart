@@ -1,11 +1,10 @@
-import 'package:biblioteca_app/vistas/temas/lista_prestamos_tab.dart';
+import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
 import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:biblioteca_app/vistas/temas/lista_prestamos.dart';
 import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
 import 'package:biblioteca_app/vistas/temas/gestion_bibliotecarios.dart';
-import 'package:biblioteca_app/vistas/temas/lista_devoluciones.dart';
 import 'package:biblioteca_app/util/sesion_usuario.dart';
+
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -70,7 +69,8 @@ class HomePage extends StatelessWidget {
           _crearBoton(context, "Préstamos", Icons.assignment_return,
               const PrestamosTabScreen()),
           _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
-              const ListaDevoluciones()),
+              const EdicionDevolucion()),
+
         ],
       ),
     );

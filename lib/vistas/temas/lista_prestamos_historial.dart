@@ -16,7 +16,7 @@ class _ListaPrestamosHistorialState extends State<ListaPrestamosHistorial>
   @override
   void initState() {
     super.initState();
-    _futureHistorial = Dao.obtenerHistorialPrestamos();
+    _futureHistorial = Dao.obtenerHistorialPrestamosExtendido();
   }
 
   @override
@@ -42,7 +42,7 @@ class _ListaPrestamosHistorialState extends State<ListaPrestamosHistorial>
           return const Center(child: Text("No hay préstamos devueltos aún."));
         }
 
-        // Agrupar por título, nombre y matrícula
+        // Agrupar por nombre, matrícula y fecha
         final agrupados = <String, Map<String, dynamic>>{};
 
         for (var h in historial) {
@@ -51,20 +51,28 @@ class _ListaPrestamosHistorialState extends State<ListaPrestamosHistorial>
           final nombre = h['nombre_solicitante'] ?? '';
           final matricula = h['matricula'] ?? '';
           final fecha = h['fecha_devolucion'] ?? '';
+          final trabajador = h['nombre_trabajador'] ?? '';
+          final estadoLibro = h['estado_libro'] ?? '';
+          final responsableDev = h['responsable_devolucion'] ?? '';
 
-          final key = "$titulo|$nombre|$matricula|$fecha";
+          final key = "$nombre|$matricula|$fecha";
 
           if (!agrupados.containsKey(key)) {
             agrupados[key] = {
-              'titulo': titulo,
-              'adquisiciones': [adquisicion],
               'nombre': nombre,
               'matricula': matricula,
-              'fecha': fecha
+              'fecha': fecha,
+              'trabajador': trabajador,
+              'estado_libro': estadoLibro,
+              'responsable_devolucion': responsableDev,
+              'libros': <Map<String, dynamic>>[]
             };
-          } else {
-            agrupados[key]!['adquisiciones'].add(adquisicion);
           }
+
+          agrupados[key]!['libros'].add({
+            'titulo': titulo,
+            'adquisicion': adquisicion
+          });
         }
 
         final items = agrupados.values.toList();
@@ -74,23 +82,38 @@ class _ListaPrestamosHistorialState extends State<ListaPrestamosHistorial>
           itemBuilder: (_, i) {
             final h = items[i];
 
-            final titulo = h['titulo'];
             final nombre = h['nombre'];
             final matricula = h['matricula'];
             final fechaDev = _formatearFecha(h['fecha']);
-            final adquisiciones = (h['adquisiciones'] as List).join(', ');
+            final libros = h['libros'] as List<Map<String, dynamic>>;
+            final trabajador = h['trabajador'];
+            final estadoLibro = h['estado_libro'];
+            final responsableDev = h['responsable_devolucion'];
 
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: ListTile(
-                leading: const Icon(Icons.book_outlined),
-                title: Text(titulo),
+                leading: const Icon(Icons.history),
+                title: Text("${nombre.toString().toUpperCase()} - $matricula"),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${nombre.toString().toUpperCase()} - $matricula"),
-                    Text("Adquisiciones: $adquisiciones"),
-                    Text("Devuelto: $fechaDev"),
+                    const SizedBox(height: 4),
+                    ...libros.map((libro) => Text(
+                          "📚 ${libro['titulo']} (Adq: ${libro['adquisicion']})",
+                          style: const TextStyle(fontSize: 14),
+                        )),
+                    const SizedBox(height: 6),
+                    if (trabajador != null && trabajador.isNotEmpty)
+                      Text("Entregado por: $trabajador"),
+                    if (estadoLibro != null && estadoLibro.isNotEmpty)
+                      Text("Estado del libro: $estadoLibro"),
+                    if (responsableDev != null && responsableDev.trim().isNotEmpty)
+                      Text("Responsable devolución: $responsableDev"),
+                    Text(
+                      "Devuelto: $fechaDev",
+                      style: const TextStyle(fontStyle: FontStyle.italic),
+                    ),
                   ],
                 ),
               ),
