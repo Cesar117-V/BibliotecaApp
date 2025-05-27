@@ -1,3 +1,4 @@
+import 'package:biblioteca_app/vistas/reportes_tab.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
 import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +71,8 @@ class HomePage extends StatelessWidget {
               const PrestamosTabScreen()),
           _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
               const EdicionDevolucion()),
+          _crearBoton(context, "Reportes", Icons.bar_chart,
+              const ReportesTab()),
 
         ],
       ),
