@@ -29,14 +29,6 @@ class _GestionBibliotecariosScreenState
   }
 
   Future<void> _mostrarFormulario() async {
-    if (bibliotecarios.length >= 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Solo se permiten hasta 4 bibliotecarios')),
-      );
-      return;
-    }
-
     final nuevo = await showDialog<Bibliotecario>(
       context: context,
       builder: (_) => const EdicionBibliotecario(),
