@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
+import 'package:biblioteca_app/vistas/temas/libros_por_categoria.dart'; // 👈 Import necesario
 
 Future<bool> confirmarEliminacion(BuildContext context, String mensaje) async {
   return await showDialog<bool>(
@@ -61,6 +62,15 @@ class ListaCategoriasState extends State<ListaCategorias> {
     }
   }
 
+  void _verLibrosDeCategoria(Categoria categoria) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LibrosPorCategoria(categoria: categoria),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -76,20 +86,35 @@ class ListaCategoriasState extends State<ListaCategorias> {
           ),
           child: ListTile(
             title: Text(categoria.nombre ?? ""),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                final confirmar = await confirmarEliminacion(
-                  context,
-                  "¿Deseas eliminar esta categoría?",
-                );
-                if (confirmar) {
-                  await Dao.deleteCategoria(categoria.id!);
-                  if (mounted) await cargarDatos();
-                }
-              },
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Ver libros de la categoría',
+                  icon: const Icon(Icons.menu_book, color: Colors.blueAccent),
+                  onPressed: () => _verLibrosDeCategoria(categoria),
+                ),
+                IconButton(
+                  tooltip: 'Editar categoría',
+                  icon: const Icon(Icons.edit, color: Colors.amber),
+                  onPressed: () => _editarCategoria(categoria),
+                ),
+                IconButton(
+                  tooltip: 'Eliminar categoría',
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    final confirmar = await confirmarEliminacion(
+                      context,
+                      "¿Deseas eliminar esta categoría?",
+                    );
+                    if (confirmar) {
+                      await Dao.deleteCategoria(categoria.id!);
+                      if (mounted) await cargarDatos();
+                    }
+                  },
+                ),
+              ],
             ),
-            onTap: () => _editarCategoria(categoria),
           ),
         );
       },

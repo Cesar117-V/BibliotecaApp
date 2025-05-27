@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/autor.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_autor.dart';
+import 'package:biblioteca_app/vistas/temas/libros_por_autor.dart'; // 👈 Import necesario
 
 Future<bool> confirmarEliminacion(BuildContext context, String mensaje) async {
   return await showDialog<bool>(
@@ -58,6 +59,13 @@ class ListaAutoresState extends State<ListaAutores> {
     }
   }
 
+  void _verLibrosDelAutor(Autor autor) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => LibrosPorAutor(autor: autor)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -68,24 +76,42 @@ class ListaAutoresState extends State<ListaAutores> {
         return Card(
           elevation: 3,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: ListTile(
-            title: Text("${autor.nombre ?? ""} ${autor.apellidos ?? ""}"),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                final confirmar = await confirmarEliminacion(
-                  context,
-                  "¿Deseas eliminar este autor?",
-                );
-                if (confirmar) {
-                  await Dao.deleteAutor(autor.id!);
-                  if (mounted) await cargarDatos();
-                }
-              },
+            title: Text(
+              "${autor.nombre?.trim() ?? ""} ${autor.apellidos?.trim() ?? ""}",
             ),
-            onTap: () => _editarAutor(autor),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Ver libros del autor',
+                  icon: const Icon(Icons.menu_book, color: Colors.blueAccent),
+                  onPressed: () => _verLibrosDelAutor(autor),
+                ),
+                IconButton(
+                  tooltip: 'Editar autor',
+                  icon: const Icon(Icons.edit, color: Colors.amber),
+                  onPressed: () => _editarAutor(autor),
+                ),
+                IconButton(
+                  tooltip: 'Eliminar autor',
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    final confirmar = await confirmarEliminacion(
+                      context,
+                      "¿Deseas eliminar este autor?",
+                    );
+                    if (confirmar) {
+                      await Dao.deleteAutor(autor.id!);
+                      if (mounted) await cargarDatos();
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },

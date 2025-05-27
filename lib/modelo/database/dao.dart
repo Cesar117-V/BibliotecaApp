@@ -103,7 +103,6 @@ class Dao {
       )
     """);
 
-   
     await db.execute("""
       CREATE TABLE devoluciones (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,6 +178,16 @@ class Dao {
     final lista = List.generate(maps.length, (i) => Autor.fromJson(maps[i]));
     print("🔍 [DAO] listaAutores encontró ${lista.length} registros");
     return lista;
+  }
+
+  static Future<List<Libro>> obtenerLibrosPorAutor(int idAutor) async {
+    final db = await database;
+    final maps = await db.query(
+      'libros',
+      where: 'id_autor = ?',
+      whereArgs: [idAutor],
+    );
+    return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
   }
 
   // --------------------- CATEGORÍAS ---------------------
@@ -352,25 +361,27 @@ class Dao {
   static Future<void> restaurarStockPorPrestamo(int idPrestamo) async {
     final db = await database;
 
-    final detalles = await db.query(
-      'detalleprestamos',
-      where: 'id_prestamo = ?',
-      whereArgs: [idPrestamo],
-    );
+    final detalles = await db.rawQuery('''
+      SELECT id_libro, COUNT(*) as cantidad
+      FROM detalleprestamos
+      WHERE id_prestamo = ?
+      GROUP BY id_libro
+    ''', [idPrestamo]);
 
     for (var detalle in detalles) {
       final idLibro = detalle['id_libro'] as int;
+      final cantidad = detalle['cantidad'] as int;
 
-      // Aumentar el stock al devolver
       await db.rawUpdate('''
         UPDATE libros
         SET stock = 
           CASE 
-            WHEN stock + 1 > cantidad_ejemplares THEN cantidad_ejemplares 
-            ELSE stock + 1 
-          END
+            WHEN stock + ? > cantidad_ejemplares THEN cantidad_ejemplares
+            ELSE stock + ?
+          END,
+          disponible = 1
         WHERE id = ?
-      ''', [idLibro]);
+      ''', [cantidad, cantidad, idLibro]);
     }
   }
 
@@ -618,9 +629,10 @@ class Dao {
     );
   }
 
-static Future<List<Map<String, dynamic>>> listaDevolucionesConPrestamo() async {
-  final db = await database;
-  return await db.rawQuery('''
+  static Future<List<Map<String, dynamic>>>
+      listaDevolucionesConPrestamo() async {
+    final db = await database;
+    return await db.rawQuery('''
     SELECT d.*, 
            p.nombre_solicitante, 
            p.matricula,
@@ -632,11 +644,12 @@ static Future<List<Map<String, dynamic>>> listaDevolucionesConPrestamo() async {
     GROUP BY d.id
     ORDER BY d.id DESC
   ''');
-}
+  }
 
-static Future<List<Map<String, dynamic>>> obtenerHistorialPrestamosExtendido() async {
-  final db = await database;
-  return await db.rawQuery('''
+  static Future<List<Map<String, dynamic>>>
+      obtenerHistorialPrestamosExtendido() async {
+    final db = await database;
+    return await db.rawQuery('''
    SELECT h.*, 
        p.trabajador AS nombre_trabajador, 
        d.estado_libro, 
@@ -646,9 +659,9 @@ LEFT JOIN prestamos p ON h.id_prestamo = p.id
 LEFT JOIN devoluciones d ON h.id_prestamo = d.id_prestamo
 ORDER BY h.fecha_devolucion DESC
   ''');
-}
+  }
 
-//-----------Obtner datos estadisticas de prestamos----------------
+ //-----------Obtner datos estadisticas de prestamos----------------
 
 static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
   required int year,
@@ -686,4 +699,6 @@ static Future<List<Map<String, dynamic>>> obtenerDeudores() async {
   ''', [hoy]);
 }
 
-} 
+}
+
+
