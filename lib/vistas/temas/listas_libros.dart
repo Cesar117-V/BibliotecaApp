@@ -97,6 +97,7 @@ class ListaLibrosState extends State<ListaLibros> {
                   ? Text("Adquisición: ${libro.numAdquisicion!}")
                   : null,
               trailing: IconButton(
+                tooltip: 'Eliminar ejemplar',
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () async {
                   final confirmar = await confirmarEliminacion(
@@ -110,10 +111,6 @@ class ListaLibrosState extends State<ListaLibros> {
                   }
                 },
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _editarLibro(libro);
-              },
             ),
           );
         },
@@ -139,9 +136,79 @@ class ListaLibrosState extends State<ListaLibros> {
                 ? CircleAvatar(
                     backgroundImage: FileImage(File(libros.first.imagen!)))
                 : const CircleAvatar(child: Icon(Icons.book)),
-            trailing: IconButton(
-              icon: const Icon(Icons.remove_red_eye),
-              onPressed: () => _mostrarEjemplaresModal(libros),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 👁️ Ver descripción
+                IconButton(
+                  icon: const Icon(Icons.remove_red_eye),
+                  tooltip: 'Ver descripción',
+                  onPressed: () {
+                    final libro = libros.first;
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text(libro.titulo ?? 'Sin título'),
+                        content: SingleChildScrollView(
+                          child: Text(
+                            libro.descripcion?.isNotEmpty == true
+                                ? libro.descripcion!
+                                : 'Este libro no tiene descripción.',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                // ☰ Opciones: editar o eliminar todos
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'Opciones',
+                  onSelected: (value) async {
+                    final libroBase = libros.first;
+
+                    if (value == 'editar') {
+                      await _editarLibro(libroBase);
+                    }
+
+                    if (value == 'eliminar') {
+                      final confirmar = await confirmarEliminacion(
+                        context,
+                        "¿Deseas eliminar todos los ejemplares de \"$titulo\"?",
+                      );
+
+                      if (confirmar) {
+                        for (var libro in libros) {
+                          await Dao.deleteLibro(libro.id!);
+                        }
+                        if (mounted) await cargarDatos();
+                      }
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'editar',
+                      child: ListTile(
+                        leading: Icon(Icons.edit, color: Colors.amber),
+                        title: Text('Editar todos los ejemplares'),
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'eliminar',
+                      child: ListTile(
+                        leading: Icon(Icons.delete, color: Colors.red),
+                        title: Text('Eliminar todos los ejemplares'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             onTap: () => _mostrarEjemplaresModal(libros),
           ),
