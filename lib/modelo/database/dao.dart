@@ -661,44 +661,41 @@ ORDER BY h.fecha_devolucion DESC
   ''');
   }
 
- //-----------Obtner datos estadisticas de prestamos----------------
+  //-----------Obtner datos estadisticas de prestamos----------------
 
-static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
-  required int year,
-  required int trimestre, // 1, 2, 3, 4
-}) async {
-  final db = await database;
-  // Define los rangos de fechas para cada trimestre
-  final fechas = [
-    ['01-01', '03-31'],
-    ['04-01', '06-30'],
-    ['07-01', '09-30'],
-    ['10-01', '12-31'],
-  ];
-  final inicio = "$year-${fechas[trimestre - 1][0]}";
-  final fin = "$year-${fechas[trimestre - 1][1]}";
+  static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
+    required int year,
+    required int trimestre, // 1, 2, 3, 4
+  }) async {
+    final db = await database;
+    // Define los rangos de fechas para cada trimestre
+    final fechas = [
+      ['01-01', '03-31'],
+      ['04-01', '06-30'],
+      ['07-01', '09-30'],
+      ['10-01', '12-31'],
+    ];
+    final inicio = "$year-${fechas[trimestre - 1][0]}";
+    final fin = "$year-${fechas[trimestre - 1][1]}";
 
-  return await db.rawQuery('''
+    return await db.rawQuery('''
     SELECT carrera, sexo, COUNT(*) as cantidad
     FROM prestamos
     WHERE fecha_prestamo BETWEEN ? AND ?
     GROUP BY carrera, sexo
     ORDER BY carrera, sexo
   ''', [inicio, fin]);
-}
+  }
 //-----------Obtener lista de deudores de prestamos----------------
 
-static Future<List<Map<String, dynamic>>> obtenerDeudores() async {
-  final db = await database;
-  final hoy = DateTime.now().toIso8601String().substring(0, 10); // yyyy-MM-dd
-  return await db.rawQuery('''
+  static Future<List<Map<String, dynamic>>> obtenerDeudores() async {
+    final db = await database;
+    final hoy = DateTime.now().toIso8601String().substring(0, 10); // yyyy-MM-dd
+    return await db.rawQuery('''
     SELECT matricula, nombre_solicitante, carrera
     FROM prestamos
     WHERE activo = 1
       AND fecha_devolucion < ?
   ''', [hoy]);
+  }
 }
-
-}
-
-
