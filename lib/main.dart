@@ -11,7 +11,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:biblioteca_app/vistas/temas/temas.dart';
 import 'package:biblioteca_app/vistas/temas/home_page.dart';
 import 'package:biblioteca_app/vistas/temas/login.dart';
-import 'package:biblioteca_app/vistas/temas/edicion_prestamo.dart'; // 👈 Asegúrate de importar esta pantalla
+import 'package:biblioteca_app/vistas/temas/edicion_prestamo.dart';
+import 'package:biblioteca_app/vistas/temas/home_trabajador.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,11 +38,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/login',
       routes: {
-        '/login': (c) => const LoginScreen(),
-        '/home': (c) => const HomePage(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomePage(),
         '/prestamos': (context) => const PrestamosTabScreen(),
-        '/crearPrestamo': (context) =>
-            const EdicionPrestamo(), // ✅ Ruta añadida
+        '/crearPrestamo': (context) => const EdicionPrestamo(),
+        '/home-trabajador': (context) =>
+            const HomeTrabajador(), // ✅ Ruta agregada
       },
     );
   }

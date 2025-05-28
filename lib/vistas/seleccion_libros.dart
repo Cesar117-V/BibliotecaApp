@@ -67,10 +67,10 @@ class _SeleccionLibrosScreenState extends State<SeleccionLibrosScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 81, 87, 200),
-        title: const Text("Seleccionar Libros", style: TextStyle(color: Colors.black)),
+        title: const Text("Seleccionar Libros", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
@@ -149,57 +149,85 @@ class _SeleccionLibrosScreenState extends State<SeleccionLibrosScreen> {
                           },
                           children: ejemplares.map((libro) {
                             final yaSeleccionado = seleccionados.contains(libro);
-                            return ListTile(
-                              leading: (libro.imagen != null && File(libro.imagen!).existsSync())
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File(libro.imagen!),
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : const CircleAvatar(
-                                      backgroundColor: Color(0xFFE0E0E0),
-                                      child: Icon(Icons.book, color: Colors.black54),
-                                    ),
-                              title: Text(
-                                "Adquisición: ${libro.numAdquisicion ?? ''}",
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                            final esDisponible = libro.disponible == true;
+
+                            return IgnorePointer(
+                              ignoring: !esDisponible,
+                              child: Opacity(
+                                opacity: esDisponible ? 1.0 : 0.4,
+                                child: ListTile(
+                                  leading: (libro.imagen != null && File(libro.imagen!).existsSync())
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.file(
+                                            File(libro.imagen!),
+                                            width: 50,
+                                            height: 50,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : const CircleAvatar(
+                                          backgroundColor: Color(0xFFE0E0E0),
+                                          child: Icon(Icons.book, color: Colors.black54),
+                                        ),
+                                  title: Text(
+                                    "Adquisición: ${libro.numAdquisicion ?? ''}",
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Autor: ${widget.mapAutores[libro.idAutor] ?? 'Desconocido'}'),
+                                      Text('Categoría: ${widget.mapCategorias[libro.idCategoria] ?? 'Sin categoría'}'),
+                                      Text(libro.disponible == true ? 'Disponible' : 'No disponible',
+                                          style: TextStyle(
+                                            color: libro.disponible == true ? Colors.green : Colors.red,
+                                          )),
+                                    ],
+                                  ),
+                                  trailing: Checkbox(
+                                    value: yaSeleccionado,
+                                    onChanged: (checked) {
+                                      if (!esDisponible) return;
+                                      setState(() {
+                                        if (checked == true) {
+                                          if (seleccionados.length < widget.cantidadMaxima) {
+                                            seleccionados.add(libro);
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Ya no puedes seleccionar más libros'),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                          }
+                                        } else {
+                                          seleccionados.remove(libro);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  onTap: () {
+                                    if (!esDisponible) return;
+                                    setState(() {
+                                      if (!yaSeleccionado) {
+                                        if (seleccionados.length < widget.cantidadMaxima) {
+                                          seleccionados.add(libro);
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Ya no puedes seleccionar más libros'),
+                                              backgroundColor: Colors.redAccent,
+                                            ),
+                                          );
+                                        }
+                                      } else {
+                                        seleccionados.remove(libro);
+                                      }
+                                    });
+                                  },
+                                ),
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Autor: ${widget.mapAutores[libro.idAutor] ?? 'Desconocido'}'),
-                                  Text('Categoría: ${widget.mapCategorias[libro.idCategoria] ?? 'Sin categoría'}'),
-                                  Text(libro.disponible == true ? 'Disponible' : 'No disponible',
-                                      style: TextStyle(
-                                        color: libro.disponible == true ? Colors.green : Colors.red,
-                                      )),
-                                ],
-                              ),
-                              trailing: Checkbox(
-                                value: yaSeleccionado,
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked == true && seleccionados.length < widget.cantidadMaxima) {
-                                      seleccionados.add(libro);
-                                    } else if (checked == false) {
-                                      seleccionados.remove(libro);
-                                    }
-                                  });
-                                },
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  if (!yaSeleccionado && seleccionados.length < widget.cantidadMaxima) {
-                                    seleccionados.add(libro);
-                                  } else if (yaSeleccionado) {
-                                    seleccionados.remove(libro);
-                                  }
-                                });
-                              },
                             );
                           }).toList(),
                         ),
@@ -210,6 +238,12 @@ class _SeleccionLibrosScreenState extends State<SeleccionLibrosScreen> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 81, 87, 200),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              ),
               onPressed: () {
                 if (seleccionados.length != widget.cantidadMaxima) {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/libro.dart';
 import 'package:biblioteca_app/modelo/prestamo.dart';
 import 'package:biblioteca_app/modelo/bibliotecario.dart';
+import 'package:biblioteca_app/modelo/trabajador.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:biblioteca_app/modelo/devolucion.dart';
@@ -140,6 +141,16 @@ class Dao {
         matricula TEXT NOT NULL
       )
     """);
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS trabajadores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    apellidos TEXT,
+    correo TEXT,
+    codigo TEXT
+  )
+''');
   }
 
   // --------------------- AUTORES ---------------------
@@ -306,6 +317,44 @@ class Dao {
       whereArgs: [titulo],
     );
     return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
+  }
+
+  static Future<void> actualizarTituloGrupo(
+      String tituloOriginal, String nuevoTitulo) async {
+    final db = await database;
+    await db.update(
+      'libros',
+      {'titulo': nuevoTitulo},
+      where: 'titulo = ?',
+      whereArgs: [tituloOriginal],
+    );
+  }
+
+  static Future<void> actualizarGrupoDeLibros({
+    required String tituloOriginal,
+    String? nuevoTitulo,
+    String? descripcion,
+    int? idCategoria,
+    int? idAutor,
+    String? imagen,
+  }) async {
+    final db = await database;
+    final data = <String, Object?>{};
+
+    if (nuevoTitulo != null) data['titulo'] = nuevoTitulo;
+    if (descripcion != null) data['descripcion'] = descripcion;
+    if (idCategoria != null) data['id_categoria'] = idCategoria;
+    if (idAutor != null) data['id_autor'] = idAutor;
+    if (imagen != null) data['imagen'] = imagen;
+
+    if (data.isEmpty) return;
+
+    await db.update(
+      'libros',
+      data,
+      where: 'titulo = ?',
+      whereArgs: [tituloOriginal],
+    );
   }
 
   // --------------------- PRÉSTAMOS ---------------------
@@ -659,5 +708,106 @@ LEFT JOIN prestamos p ON h.id_prestamo = p.id
 LEFT JOIN devoluciones d ON h.id_prestamo = d.id_prestamo
 ORDER BY h.fecha_devolucion DESC
   ''');
+  }
+
+<<<<<<< HEAD
+  //-----------Obtner datos estadisticas de prestamos----------------
+
+  static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
+    required int year,
+    required int trimestre, // 1, 2, 3, 4
+  }) async {
+    final db = await database;
+    // Define los rangos de fechas para cada trimestre
+    final fechas = [
+      ['01-01', '03-31'],
+      ['04-01', '06-30'],
+      ['07-01', '09-30'],
+      ['10-01', '12-31'],
+    ];
+    final inicio = "$year-${fechas[trimestre - 1][0]}";
+    final fin = "$year-${fechas[trimestre - 1][1]}";
+
+    return await db.rawQuery('''
+    SELECT carrera, sexo, COUNT(*) as cantidad
+    FROM prestamos
+    WHERE fecha_prestamo BETWEEN ? AND ?
+    GROUP BY carrera, sexo
+    ORDER BY carrera, sexo
+  ''', [inicio, fin]);
+  }
+//-----------Obtener lista de deudores de prestamos----------------
+
+  static Future<List<Map<String, dynamic>>> obtenerDeudores() async {
+    final db = await database;
+    final hoy = DateTime.now().toIso8601String().substring(0, 10); // yyyy-MM-dd
+    return await db.rawQuery('''
+    SELECT matricula, nombre_solicitante, carrera
+    FROM prestamos
+    WHERE activo = 1
+      AND fecha_devolucion < ?
+  ''', [hoy]);
+=======
+  // --------------------- TRABAJADORES ---------------------
+
+// LISTA
+  static Future<List<Trabajador>> listaTrabajadores() async {
+    final db = await database;
+    final maps = await db.query('trabajadores');
+    return List.generate(maps.length, (i) => Trabajador.fromJson(maps[i]));
+  }
+
+// CREAR
+  static Future<Trabajador> createTrabajador(Trabajador t) async {
+    final db = await database;
+    final id = await db.insert('trabajadores', t.toJson());
+    t.id = id;
+    return t;
+  }
+
+// ACTUALIZAR
+  static Future<int> updateTrabajador(Trabajador t) async {
+    final db = await database;
+    return await db.update(
+      'trabajadores',
+      t.toJson(),
+      where: 'id = ?',
+      whereArgs: [t.id],
+    );
+  }
+
+// ELIMINAR
+  static Future<int> deleteTrabajador(int id) async {
+    final db = await database;
+    return await db.delete('trabajadores', where: 'id = ?', whereArgs: [id]);
+  }
+
+// Validar trabajador (para login)
+  static Future<bool> validarTrabajador(String correo, String codigo) async {
+    final db = await database;
+    final result = await db.query(
+      'trabajadores',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+    return result.isNotEmpty;
+  }
+
+// Obtener un trabajador por correo y código
+  static Future<Trabajador?> obtenerTrabajador(
+      String correo, String codigo) async {
+    final db = await database;
+    final maps = await db.query(
+      'trabajadores',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+
+    if (maps.isNotEmpty) {
+      return Trabajador.fromJson(maps.first);
+    } else {
+      return null;
+    }
+>>>>>>> feebb32 (Agregado diseño responsivo y funcionalidad de editar/eliminar trabajadores)
   }
 }

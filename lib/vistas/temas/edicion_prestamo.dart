@@ -28,16 +28,16 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
   DateTime? fechaPrestamo;
 
   final List<String> carreras = [
-    'INGENIERIA INFORMATICA',
-    'CONTADOR PUBLICO',
-    'INGENIERIA EN GESTION EMPRESARIAL',
-    'INGENIERIA CIVIL',
-    'INGENIERIA EN SISTEMAS COMPUTACIONALES',
+    'IINF',
+    'CP',
+    'IGE',
+    'IC',
+    'ISC',
   ];
 
   String? carreraSeleccionada;
 
-  final List<String> generos = ['Hombre', 'Mujer'];
+  final List<String> generos = ['M', 'F'];
   String? generoSeleccionado;
 
   int? cantidadSeleccionada;
@@ -74,7 +74,6 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       fechaPrestamo = DateTime.tryParse(p.fechaPrestamo ?? '');
       generoSeleccionado = p.sexo;
       cantidadSeleccionada = p.cantidadLibros;
-      // Si quieres cargar los libros seleccionados al editar, deberías obtenerlos de la base de datos
     }
   }
 
@@ -109,12 +108,13 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
 
   void _guardarPrestamo() async {
     if (_formKey.currentState!.validate()) {
-      if (librosSeleccionados.length != (cantidadSeleccionada ?? 0)) {
+      if (fechaPrestamo == null || fechaDevolucion == null || cantidadSeleccionada == null || librosSeleccionados.length != cantidadSeleccionada) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Debes seleccionar exactamente $cantidadSeleccionada libros.')),
+          const SnackBar(content: Text('Es necesario llenar todos los apartados')),
         );
         return;
       }
+
       final prestamo = Prestamo(
         id: widget.prestamo?.id,
         matricula: matriculaController.text,
@@ -165,6 +165,10 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
         const SnackBar(content: Text('Préstamo guardado exitosamente')),
       );
       Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Es necesario llenar todos los apartados')),
+      );
     }
   }
 

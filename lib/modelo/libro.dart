@@ -41,6 +41,7 @@ class Libro {
     disponible = json['disponible'] == 1;
   }
 
+  // Convertir a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -55,5 +56,34 @@ class Libro {
       'cantidad_ejemplares': cantidadEjemplares,
       'disponible': (disponible ?? true) ? 1 : 0,
     };
+  }
+
+  // Método para copiar el libro con nuevos valores
+  Libro copyWith({
+    int? id,
+    String? titulo,
+    String? descripcion,
+    String? imagen,
+    int? idCategoria,
+    int? numeroPaginas,
+    int? idAutor,
+    int? stock,
+    String? numAdquisicion,
+    int? cantidadEjemplares,
+    bool? disponible,
+  }) {
+    return Libro(
+      id: id ?? this.id,
+      titulo: titulo ?? this.titulo,
+      descripcion: descripcion ?? this.descripcion,
+      imagen: imagen ?? this.imagen,
+      idCategoria: idCategoria ?? this.idCategoria,
+      numeroPaginas: numeroPaginas ?? this.numeroPaginas,
+      idAutor: idAutor ?? this.idAutor,
+      stock: stock ?? this.stock,
+      numAdquisicion: numAdquisicion ?? this.numAdquisicion,
+      cantidadEjemplares: cantidadEjemplares ?? this.cantidadEjemplares,
+      disponible: disponible ?? this.disponible,
+    );
   }
 }
