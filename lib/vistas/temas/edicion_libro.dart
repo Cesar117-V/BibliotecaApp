@@ -44,7 +44,7 @@ class _EdicionLibroState extends State<EdicionLibro> {
       _rutaImagen = libro.imagen;
       _idCategoriaSeleccionada = libro.idCategoria;
       _idAutorSeleccionado = libro.idAutor;
-      _generarCamposAdquisicion(int.tryParse(_stockController.text) ?? 1);
+      _generarCamposAdquisicion(1);
     } else {
       _generarCamposAdquisicion(1);
     }
@@ -112,43 +112,46 @@ class _EdicionLibroState extends State<EdicionLibro> {
                   v == null || v.isEmpty ? "Campo obligatorio" : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _stockController,
-              keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: "Cantidad de ejemplares"),
-              validator: (v) {
-                if (v == null || v.isEmpty) return "Campo obligatorio";
-                final value = int.tryParse(v);
-                if (value == null || value <= 0) {
-                  return "Debe ser un número válido";
-                }
-                return null;
-              },
-              onChanged: (v) {
-                final value = int.tryParse(v);
-                if (value != null && value > 0) {
-                  _generarCamposAdquisicion(value);
-                }
-              },
-            ),
+            if (widget.libro == null)
+              TextFormField(
+                controller: _stockController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: "Cantidad de ejemplares"),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return "Campo obligatorio";
+                  final value = int.tryParse(v);
+                  if (value == null || value <= 0) {
+                    return "Debe ser un número válido";
+                  }
+                  return null;
+                },
+                onChanged: (v) {
+                  final value = int.tryParse(v);
+                  if (value != null && value > 0) {
+                    _generarCamposAdquisicion(value);
+                  }
+                },
+              ),
             const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(_adquisicionControllers.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: TextFormField(
-                    controller: _adquisicionControllers[index],
-                    decoration: InputDecoration(
-                      labelText: "No. Adquisición ${index + 1}",
+            if (widget.libro == null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:
+                    List.generate(_adquisicionControllers.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: TextFormField(
+                      controller: _adquisicionControllers[index],
+                      decoration: InputDecoration(
+                        labelText: "No. Adquisición ${index + 1}",
+                      ),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? "Campo obligatorio" : null,
                     ),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? "Campo obligatorio" : null,
-                  ),
-                );
-              }),
-            ),
+                  );
+                }),
+              ),
             const SizedBox(height: 20),
             DropdownButtonFormField<int>(
               decoration: const InputDecoration(labelText: "Categoría"),
@@ -195,45 +198,82 @@ class _EdicionLibroState extends State<EdicionLibro> {
     if (picked != null) setState(() => _rutaImagen = picked.path);
   }
 
+  Future<void> _mostrarDialogo(String mensaje) async {
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Confirmación"),
+        content: Text(mensaje),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Aceptar"),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _guardarLibro() async {
     if (_rutaImagen == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Selecciona una imagen del libro")),
-      );
+      await _mostrarDialogo("Selecciona una imagen del libro");
       return;
     }
 
     if (_formKey.currentState!.validate()) {
-      final titulo = _tituloController.text;
-      final descripcion = _descripcionController.text;
+      final titulo = _tituloController.text.trim();
+      final descripcion = _descripcionController.text.trim();
       final paginas = int.tryParse(_numPaginasController.text) ?? 0;
-      final stock = int.tryParse(_stockController.text) ?? 0;
+      final stock = int.tryParse(_stockController.text) ?? 1;
       final categoriaId = _idCategoriaSeleccionada;
       final autorId = _idAutorSeleccionado;
       final imagen = _rutaImagen;
 
-      for (var i = 0; i < stock; i++) {
-        final libro = Libro(
-          titulo: titulo,
-          descripcion: descripcion,
-          numeroPaginas: paginas,
-          imagen: imagen,
-          idCategoria: categoriaId,
-          idAutor: autorId,
-          stock: 1,
-          numAdquisicion: _adquisicionControllers[i].text,
-          cantidadEjemplares: 1,
-          disponible: true,
-        );
+      if (widget.libro != null) {
+        final tituloOriginal = widget.libro!.titulo ?? '';
 
-        await Dao.createLibro(libro);
+        final cambios = <String, dynamic>{};
+        if (titulo != tituloOriginal) cambios['nuevoTitulo'] = titulo;
+        if (descripcion != widget.libro!.descripcion)
+          cambios['descripcion'] = descripcion;
+        if (categoriaId != widget.libro!.idCategoria)
+          cambios['idCategoria'] = categoriaId;
+        if (autorId != widget.libro!.idAutor) cambios['idAutor'] = autorId;
+        if (imagen != widget.libro!.imagen) cambios['imagen'] = imagen;
+
+        if (cambios.isNotEmpty) {
+          await Dao.actualizarGrupoDeLibros(
+            tituloOriginal: tituloOriginal,
+            nuevoTitulo: cambios['nuevoTitulo'],
+            descripcion: cambios['descripcion'],
+            idCategoria: cambios['idCategoria'],
+            idAutor: cambios['idAutor'],
+            imagen: cambios['imagen'],
+          );
+        }
+
+        await _mostrarDialogo("Libro actualizado exitosamente");
+      } else {
+        for (var i = 0; i < stock; i++) {
+          final libro = Libro(
+            titulo: titulo,
+            descripcion: descripcion,
+            numeroPaginas: paginas,
+            imagen: imagen,
+            idCategoria: categoriaId,
+            idAutor: autorId,
+            stock: 1,
+            numAdquisicion: _adquisicionControllers[i].text,
+            cantidadEjemplares: 1,
+            disponible: true,
+          );
+          await Dao.createLibro(libro);
+        }
+
+        await _mostrarDialogo("Libro(s) guardado(s) exitosamente");
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Libro(s) guardado(s) exitosamente")),
-      );
-
-      Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, true);
     }
   }
 }

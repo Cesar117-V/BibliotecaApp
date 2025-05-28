@@ -308,6 +308,44 @@ class Dao {
     return List.generate(maps.length, (i) => Libro.fromJson(maps[i]));
   }
 
+  static Future<void> actualizarTituloGrupo(
+      String tituloOriginal, String nuevoTitulo) async {
+    final db = await database;
+    await db.update(
+      'libros',
+      {'titulo': nuevoTitulo},
+      where: 'titulo = ?',
+      whereArgs: [tituloOriginal],
+    );
+  }
+
+  static Future<void> actualizarGrupoDeLibros({
+    required String tituloOriginal,
+    String? nuevoTitulo,
+    String? descripcion,
+    int? idCategoria,
+    int? idAutor,
+    String? imagen,
+  }) async {
+    final db = await database;
+    final data = <String, Object?>{};
+
+    if (nuevoTitulo != null) data['titulo'] = nuevoTitulo;
+    if (descripcion != null) data['descripcion'] = descripcion;
+    if (idCategoria != null) data['id_categoria'] = idCategoria;
+    if (idAutor != null) data['id_autor'] = idAutor;
+    if (imagen != null) data['imagen'] = imagen;
+
+    if (data.isEmpty) return;
+
+    await db.update(
+      'libros',
+      data,
+      where: 'titulo = ?',
+      whereArgs: [tituloOriginal],
+    );
+  }
+
   // --------------------- PRÉSTAMOS ---------------------
   static Future<Prestamo> createPrestamo(Prestamo prestamo) async {
     final db = await database;
