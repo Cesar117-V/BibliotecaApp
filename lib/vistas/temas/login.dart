@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:biblioteca_app/vistas/temas/home_page.dart';
 import 'package:biblioteca_app/vistas/temas/home_bibliotecario.dart';
+import 'package:biblioteca_app/vistas/temas/home_trabajador.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
-import 'package:biblioteca_app/util/sesion_usuario.dart'; // ✅ Importar la clase de sesión
+import 'package:biblioteca_app/util/sesion_usuario.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -15,7 +16,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  List<bool> _seleccionTipo = [true, false]; // [Administrador, Bibliotecario]
+  List<bool> _seleccionTipo = [
+    true,
+    false,
+    false
+  ]; // [Admin, Biblio, Trabajador]
 
   @override
   void dispose() {
@@ -27,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _iniciarSesion() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    final tipoUsuario = _seleccionTipo[0] ? 'admin' : 'bibliotecario';
+    final int seleccionado = _seleccionTipo.indexWhere((v) => v);
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,9 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (tipoUsuario == 'admin') {
+    if (seleccionado == 0) {
+      // Admin
       if (email == 'anet13@outlook.es' && password == 'Viri2152') {
-        // ✅ Guardar datos del administrador
         SesionUsuario.nombre = 'Administrador';
         SesionUsuario.tipo = 'admin';
         SesionUsuario.correo = email;
@@ -50,12 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correo o contraseña de administrador incorrectos'),
-          ),
+              content:
+                  Text('Correo o contraseña de administrador incorrectos')),
         );
       }
-    } else {
-      // ✅ Verificar bibliotecario
+    } else if (seleccionado == 1) {
+      // Bibliotecario
       final bibliotecario = await Dao.obtenerBibliotecario(email, password);
       if (bibliotecario != null) {
         SesionUsuario.nombre =
@@ -71,6 +76,24 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Correo o código incorrecto para bibliotecario')),
+        );
+      }
+    } else {
+      // Trabajador
+      final trabajador = await Dao.obtenerTrabajador(email, password);
+      if (trabajador != null) {
+        SesionUsuario.nombre = '${trabajador.nombre} ${trabajador.apellidos}';
+        SesionUsuario.tipo = 'trabajador';
+        SesionUsuario.correo = trabajador.correo;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeTrabajador()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Correo o código incorrecto para trabajador')),
         );
       }
     }
@@ -117,10 +140,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   fillColor: const Color(0xFF0D47A1),
                   color: Colors.black87,
                   constraints:
-                      const BoxConstraints(minHeight: 40, minWidth: 140),
+                      const BoxConstraints(minHeight: 40, minWidth: 130),
                   children: const [
                     Text("Administrador"),
                     Text("Bibliotecario"),
+                    Text("Trabajador"),
                   ],
                 ),
                 const SizedBox(height: 24),

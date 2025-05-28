@@ -3,6 +3,7 @@ import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/libro.dart';
 import 'package:biblioteca_app/modelo/prestamo.dart';
 import 'package:biblioteca_app/modelo/bibliotecario.dart';
+import 'package:biblioteca_app/modelo/trabajador.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:biblioteca_app/modelo/devolucion.dart';
@@ -140,6 +141,16 @@ class Dao {
         matricula TEXT NOT NULL
       )
     """);
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS trabajadores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    apellidos TEXT,
+    correo TEXT,
+    codigo TEXT
+  )
+''');
   }
 
   // --------------------- AUTORES ---------------------
@@ -661,6 +672,7 @@ ORDER BY h.fecha_devolucion DESC
   ''');
   }
 
+<<<<<<< HEAD
   //-----------Obtner datos estadisticas de prestamos----------------
 
   static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
@@ -697,5 +709,67 @@ ORDER BY h.fecha_devolucion DESC
     WHERE activo = 1
       AND fecha_devolucion < ?
   ''', [hoy]);
+=======
+  // --------------------- TRABAJADORES ---------------------
+
+// LISTA
+  static Future<List<Trabajador>> listaTrabajadores() async {
+    final db = await database;
+    final maps = await db.query('trabajadores');
+    return List.generate(maps.length, (i) => Trabajador.fromJson(maps[i]));
+  }
+
+// CREAR
+  static Future<Trabajador> createTrabajador(Trabajador t) async {
+    final db = await database;
+    final id = await db.insert('trabajadores', t.toJson());
+    t.id = id;
+    return t;
+  }
+
+// ACTUALIZAR
+  static Future<int> updateTrabajador(Trabajador t) async {
+    final db = await database;
+    return await db.update(
+      'trabajadores',
+      t.toJson(),
+      where: 'id = ?',
+      whereArgs: [t.id],
+    );
+  }
+
+// ELIMINAR
+  static Future<int> deleteTrabajador(int id) async {
+    final db = await database;
+    return await db.delete('trabajadores', where: 'id = ?', whereArgs: [id]);
+  }
+
+// Validar trabajador (para login)
+  static Future<bool> validarTrabajador(String correo, String codigo) async {
+    final db = await database;
+    final result = await db.query(
+      'trabajadores',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+    return result.isNotEmpty;
+  }
+
+// Obtener un trabajador por correo y código
+  static Future<Trabajador?> obtenerTrabajador(
+      String correo, String codigo) async {
+    final db = await database;
+    final maps = await db.query(
+      'trabajadores',
+      where: 'correo = ? AND codigo = ?',
+      whereArgs: [correo, codigo],
+    );
+
+    if (maps.isNotEmpty) {
+      return Trabajador.fromJson(maps.first);
+    } else {
+      return null;
+    }
+>>>>>>> feebb32 (Agregado diseño responsivo y funcionalidad de editar/eliminar trabajadores)
   }
 }
