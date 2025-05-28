@@ -1,14 +1,10 @@
-import 'package:biblioteca_app/vistas/reportes_tab.dart';
-import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
-import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
-import 'package:biblioteca_app/vistas/temas/gestion_bibliotecarios.dart';
-import 'package:biblioteca_app/vistas/temas/gestion_trabajadores.dart'; // ✅ Importa esta pantalla
 import 'package:biblioteca_app/util/sesion_usuario.dart';
+import 'package:biblioteca_app/vistas/temas/lista_prestamos_tab.dart';
+import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+class HomeTrabajador extends StatelessWidget {
+  const HomeTrabajador({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +14,7 @@ class HomePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Biblioteca del Itch",
+              "Biblioteca - Trabajador",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
@@ -50,6 +46,7 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               );
+
               if (confirmar == true) {
                 Navigator.pushReplacementNamed(context, '/login');
               }
@@ -63,22 +60,10 @@ class HomePage extends StatelessWidget {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         children: [
-          _crearBoton(
-              context, "Inventario", Icons.inventory, const InventarioScreen()),
-          _crearBoton(context, "Gestión de Bibliotecarios",
-              Icons.manage_accounts, const GestionBibliotecariosScreen()),
-          _crearBoton(context, "Gestión de Trabajadores", Icons.people_alt,
-              const GestionTrabajadoresScreen()), // ✅ Nuevo botón
           _crearBoton(context, "Préstamos", Icons.assignment_return,
-              const PrestamosTabScreen()),
-          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
-              const EdicionDevolucion()),
-<<<<<<< HEAD
-          _crearBoton(context, "Reportes", Icons.bar_chart,
-              const ReportesTab()),
-
-=======
->>>>>>> feebb32 (Agregado diseño responsivo y funcionalidad de editar/eliminar trabajadores)
+              const ListaPrestamosTab()),
+          _crearBoton(context, "Inventario", Icons.inventory_2,
+              const InventarioScreen()),
         ],
       ),
     );
