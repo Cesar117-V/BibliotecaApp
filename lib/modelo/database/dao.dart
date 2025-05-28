@@ -710,7 +710,6 @@ ORDER BY h.fecha_devolucion DESC
   ''');
   }
 
-<<<<<<< HEAD
   //-----------Obtner datos estadisticas de prestamos----------------
 
   static Future<List<Map<String, dynamic>>> prestamosPorTrimestreGeneroCarrera({
@@ -747,10 +746,10 @@ ORDER BY h.fecha_devolucion DESC
     WHERE activo = 1
       AND fecha_devolucion < ?
   ''', [hoy]);
-=======
+  }
+
   // --------------------- TRABAJADORES ---------------------
 
-// LISTA
   static Future<List<Trabajador>> listaTrabajadores() async {
     final db = await database;
     final maps = await db.query('trabajadores');
@@ -808,6 +807,5 @@ ORDER BY h.fecha_devolucion DESC
     } else {
       return null;
     }
->>>>>>> feebb32 (Agregado diseño responsivo y funcionalidad de editar/eliminar trabajadores)
   }
 }

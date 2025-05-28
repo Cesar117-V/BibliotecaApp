@@ -1,11 +1,11 @@
-import 'package:biblioteca_app/vistas/reportes_tab.dart';
-import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
-import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:biblioteca_app/util/sesion_usuario.dart';
 import 'package:biblioteca_app/vistas/temas/inventario_screen.dart';
 import 'package:biblioteca_app/vistas/temas/gestion_bibliotecarios.dart';
-import 'package:biblioteca_app/vistas/temas/gestion_trabajadores.dart'; // ✅ Importa esta pantalla
-import 'package:biblioteca_app/util/sesion_usuario.dart';
+import 'package:biblioteca_app/vistas/temas/gestion_trabajadores.dart';
+import 'package:biblioteca_app/vistas/temas/prestamos_tab_screen.dart';
+import 'package:biblioteca_app/vistas/temas/edicion_devolucion.dart';
+import 'package:biblioteca_app/vistas/reportes_tab.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -57,28 +57,36 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+      body: Column(
         children: [
-          _crearBoton(
-              context, "Inventario", Icons.inventory, const InventarioScreen()),
-          _crearBoton(context, "Gestión de Bibliotecarios",
-              Icons.manage_accounts, const GestionBibliotecariosScreen()),
-          _crearBoton(context, "Gestión de Trabajadores", Icons.people_alt,
-              const GestionTrabajadoresScreen()), // ✅ Nuevo botón
-          _crearBoton(context, "Préstamos", Icons.assignment_return,
-              const PrestamosTabScreen()),
-          _crearBoton(context, "Devoluciones", Icons.assignment_turned_in,
-              const EdicionDevolucion()),
-<<<<<<< HEAD
-          _crearBoton(context, "Reportes", Icons.bar_chart,
-              const ReportesTab()),
-
-=======
->>>>>>> feebb32 (Agregado diseño responsivo y funcionalidad de editar/eliminar trabajadores)
+          Container(height: 40, color: Colors.grey.shade400), // Borde superior
+          Expanded(
+            child: Center(
+              child: Wrap(
+                spacing: 30,
+                runSpacing: 30,
+                alignment: WrapAlignment.center,
+                children: [
+                  _crearBoton(context, "Inventario", Icons.inventory,
+                      const InventarioScreen()),
+                  _crearBoton(
+                      context,
+                      "Gestión de Bibliotecarios",
+                      Icons.manage_accounts,
+                      const GestionBibliotecariosScreen()),
+                  _crearBoton(context, "Gestión de Trabajadores",
+                      Icons.people_alt, const GestionTrabajadoresScreen()),
+                  _crearBoton(context, "Préstamos", Icons.assignment_return,
+                      const PrestamosTabScreen()),
+                  _crearBoton(context, "Devoluciones",
+                      Icons.assignment_turned_in, const EdicionDevolucion()),
+                  _crearBoton(context, "Reportes", Icons.bar_chart,
+                      const ReportesTab()),
+                ],
+              ),
+            ),
+          ),
+          Container(height: 40, color: Colors.grey.shade400), // Borde inferior
         ],
       ),
     );
@@ -86,21 +94,29 @@ class HomePage extends StatelessWidget {
 
   Widget _crearBoton(
       BuildContext context, String titulo, IconData icono, Widget pagina) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(16.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icono, size: 50),
-          const SizedBox(height: 10),
-          Text(titulo, style: const TextStyle(fontSize: 18)),
-        ],
+    return SizedBox(
+      width: 220,
+      height: 220,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue.shade600,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 4,
+        ),
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icono, size: 65, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(titulo,
+                style: const TextStyle(fontSize: 20, color: Colors.white),
+                textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }
