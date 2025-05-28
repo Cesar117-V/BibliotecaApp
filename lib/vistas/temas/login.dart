@@ -105,119 +105,129 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: const Color(0xFF0D47A1),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('assets/images/logo_itch.jpg', height: 80),
-                const SizedBox(height: 20),
-                const Text(
-                  'Iniciar Sesión',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/logo_itch.jpg', height: 80),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Iniciar Sesión',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ToggleButtons(
+                    isSelected: _seleccionTipo,
+                    onPressed: (int index) {
+                      setState(() {
+                        for (int i = 0; i < _seleccionTipo.length; i++) {
+                          _seleccionTipo[i] = i == index;
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    selectedColor: Colors.white,
+                    fillColor: const Color(0xFF0D47A1),
                     color: Colors.black87,
+                    constraints:
+                        const BoxConstraints(minHeight: 40, minWidth: 140),
+                    children: const [
+                      Text("Administrador"),
+                      Text("Bibliotecario"),
+                      Text("Trabajador"),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                ToggleButtons(
-                  isSelected: _seleccionTipo,
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < _seleccionTipo.length; i++) {
-                        _seleccionTipo[i] = i == index;
-                      }
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  selectedColor: Colors.white,
-                  fillColor: const Color(0xFF0D47A1),
-                  color: Colors.black87,
-                  constraints:
-                      const BoxConstraints(minHeight: 40, minWidth: 130),
-                  children: const [
-                    Text("Administrador"),
-                    Text("Bibliotecario"),
-                    Text("Trabajador"),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Correo Electrónico',
-                    hintText: 'usuario@ejemplo.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: _seleccionTipo[0]
-                        ? 'Contraseña'
-                        : 'Código de 6 dígitos',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                  keyboardType: _seleccionTipo[0]
-                      ? TextInputType.visiblePassword
-                      : TextInputType.number,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _iniciarSesion,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0D47A1),
-                      shape: RoundedRectangleBorder(
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Correo Electrónico',
+                      hintText: 'usuario@ejemplo.com',
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
-                    child: const Text(
-                      'Iniciar Sesión',
-                      style: TextStyle(fontSize: 16),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: _seleccionTipo[0]
+                          ? 'Contraseña'
+                          : 'Código de 6 dígitos',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                    ),
+                    keyboardType: _seleccionTipo[0]
+                        ? TextInputType.visiblePassword
+                        : TextInputType.number,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _iniciarSesion,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D47A1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                      ),
+                      child: const Text(
+                        'Iniciar Sesión',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text('Recuperar acceso'),
-                        content: const Text(
-                          'Si olvidaste la contraseña del administrador, contacta al responsable del sistema.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cerrar'),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Recuperar acceso'),
+                          content: const Text(
+                            'Si olvidaste la contraseña del administrador, contacta al responsable del sistema.',
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    '¿Olvidaste tu contraseña?',
-                    style: TextStyle(color: Colors.black87),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cerrar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      '¿Olvidaste tu contraseña?',
+                      style: TextStyle(color: Colors.black87),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
