@@ -56,59 +56,65 @@ class HomeTrabajador extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(height: 40, color: Colors.grey.shade400), // Borde superior
-          Expanded(
-            child: Center(
-              child: Wrap(
-                spacing: 30,
-                runSpacing: 30,
-                alignment: WrapAlignment.center,
-                children: [
-                  _crearBoton(context, "Préstamos", Icons.assignment_return,
-                      const ListaPrestamosTab()),
-                  _crearBoton(context, "Inventario", Icons.inventory_2,
-                      const InventarioScreen()),
-                  _crearBoton(context, "Devoluciones",
-                      Icons.assignment_turned_in, const EdicionDevolucion()),
-                  _crearBoton(context, "Reportes", Icons.bar_chart,
-                      const ReportesTab()),
-                ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          int crossAxisCount = constraints.maxWidth >= 1000 ? 4 : 2;
+
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Container(height: 40, color: Colors.grey.shade400),
               ),
-            ),
-          ),
-          Container(height: 40, color: Colors.grey.shade400), // Borde inferior
-        ],
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverGrid.count(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 30,
+                  mainAxisSpacing: 30,
+                  children: [
+                    _crearBoton(context, "Préstamos", Icons.assignment_return,
+                        const ListaPrestamosTab()),
+                    _crearBoton(context, "Inventario", Icons.inventory_2,
+                        const InventarioScreen()),
+                    _crearBoton(context, "Devoluciones",
+                        Icons.assignment_turned_in, const EdicionDevolucion()),
+                    _crearBoton(context, "Reportes", Icons.bar_chart,
+                        const ReportesTab()),
+                  ],
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Container(height: 40, color: Colors.grey.shade400),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _crearBoton(
       BuildContext context, String titulo, IconData icono, Widget pagina) {
-    return SizedBox(
-      width: 220,
-      height: 220,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 4,
-        ),
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icono, size: 65, color: Colors.white),
-            const SizedBox(height: 16),
-            Text(titulo,
-                style: const TextStyle(fontSize: 20, color: Colors.white),
-                textAlign: TextAlign.center),
-          ],
-        ),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue.shade600,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 4,
+      ),
+      onPressed: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icono, size: 60, color: Colors.white),
+          const SizedBox(height: 16),
+          Text(
+            titulo,
+            style: const TextStyle(fontSize: 18, color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

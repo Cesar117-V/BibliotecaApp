@@ -9,7 +9,7 @@ class HomeBibliotecario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Asegura fondo blanco
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,8 +33,7 @@ class HomeBibliotecario extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('¿Cerrar sesión?'),
-                  content:
-                      const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -47,7 +46,6 @@ class HomeBibliotecario extends StatelessWidget {
                   ],
                 ),
               );
-
               if (confirmar == true) {
                 Navigator.pushReplacementNamed(context, '/login');
               }
@@ -55,44 +53,67 @@ class HomeBibliotecario extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-              height: 40,
-              color: Colors.grey.shade400), // 🔹 Borde superior alto
-          Expanded(
-            child: Center(
-              child: Wrap(
-                spacing: 30,
-                runSpacing: 30,
-                alignment: WrapAlignment.center,
-                children: [
-                  _crearBoton(context, "Préstamos", Icons.assignment_return,
-                      const ListaPrestamosTab()),
-                  _crearBoton(context, "Devoluciones",
-                      Icons.assignment_turned_in, const ListaDevoluciones()),
-                ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Tamaño del botón en proporción a la pantalla
+          double buttonWidth = constraints.maxWidth < 600
+              ? constraints.maxWidth * 0.8
+              : 220;
+          double buttonHeight = constraints.maxWidth < 600
+              ? 140
+              : 220;
+
+          return Column(
+            children: [
+              if (constraints.maxWidth > 600)
+                Container(height: 40, color: Colors.grey.shade400),
+
+              Expanded(
+                child: Center(
+                  child: Wrap(
+                    spacing: 30,
+                    runSpacing: 30,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _crearBoton(
+                          context,
+                          "Préstamos",
+                          Icons.assignment_return,
+                          const ListaPrestamosTab(),
+                          buttonWidth,
+                          buttonHeight),
+                      _crearBoton(
+                          context,
+                          "Devoluciones",
+                          Icons.assignment_turned_in,
+                          const ListaDevoluciones(),
+                          buttonWidth,
+                          buttonHeight),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          Container(
-              height: 40,
-              color: Colors.grey.shade400), // 🔹 Borde inferior alto
-        ],
+
+              if (constraints.maxWidth > 600)
+                Container(height: 40, color: Colors.grey.shade400),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _crearBoton(
-      BuildContext context, String titulo, IconData icono, Widget pagina) {
+  Widget _crearBoton(BuildContext context, String titulo, IconData icono,
+      Widget pagina, double width, double height) {
     return SizedBox(
-      width: 220,
-      height: 220,
+      width: width,
+      height: height,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue.shade600,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           elevation: 4,
         ),
         onPressed: () {
@@ -101,11 +122,13 @@ class HomeBibliotecario extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icono, size: 65, color: Colors.white),
+            Icon(icono, size: width < 200 ? 40 : 65, color: Colors.white),
             const SizedBox(height: 16),
-            Text(titulo,
-                style: const TextStyle(fontSize: 20, color: Colors.white),
-                textAlign: TextAlign.center),
+            Text(
+              titulo,
+              style: const TextStyle(fontSize: 20, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

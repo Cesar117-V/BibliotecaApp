@@ -36,8 +36,7 @@ class HomePage extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('¿Cerrar sesión?'),
-                  content:
-                      const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -57,64 +56,56 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(height: 40, color: Colors.grey.shade400), // Borde superior
-          Expanded(
-            child: Center(
-              child: Wrap(
-                spacing: 30,
-                runSpacing: 30,
-                alignment: WrapAlignment.center,
-                children: [
-                  _crearBoton(context, "Inventario", Icons.inventory,
-                      const InventarioScreen()),
-                  _crearBoton(
-                      context,
-                      "Gestión de Bibliotecarios",
-                      Icons.manage_accounts,
-                      const GestionBibliotecariosScreen()),
-                  _crearBoton(context, "Gestión de Trabajadores",
-                      Icons.people_alt, const GestionTrabajadoresScreen()),
-                  _crearBoton(context, "Préstamos", Icons.assignment_return,
-                      const PrestamosTabScreen()),
-                  _crearBoton(context, "Devoluciones",
-                      Icons.assignment_turned_in, const EdicionDevolucion()),
-                  _crearBoton(context, "Reportes", Icons.bar_chart,
-                      const ReportesTab()),
-                ],
-              ),
-            ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Center(
+          child: Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              _crearBoton(context, "Inventario", Icons.inventory, const InventarioScreen()),
+              _crearBoton(context, "Gestión de Bibliotecarios", Icons.manage_accounts, const GestionBibliotecariosScreen()),
+              _crearBoton(context, "Gestión de Trabajadores", Icons.people_alt, const GestionTrabajadoresScreen()),
+              _crearBoton(context, "Préstamos", Icons.assignment_return, const PrestamosTabScreen()),
+              _crearBoton(context, "Devoluciones", Icons.assignment_turned_in, const EdicionDevolucion()),
+              _crearBoton(context, "Reportes", Icons.bar_chart, const ReportesTab()),
+            ],
           ),
-          Container(height: 40, color: Colors.grey.shade400), // Borde inferior
-        ],
+        ),
       ),
     );
   }
 
-  Widget _crearBoton(
-      BuildContext context, String titulo, IconData icono, Widget pagina) {
-    return SizedBox(
-      width: 220,
-      height: 220,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 4,
+  Widget _crearBoton(BuildContext context, String titulo, IconData icono, Widget pagina) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
+      },
+      child: Container(
+        width: 160,
+        height: 160,
+        decoration: BoxDecoration(
+          color: Colors.blue.shade700,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(2, 4),
+            ),
+          ],
         ),
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
-        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icono, size: 65, color: Colors.white),
-            const SizedBox(height: 16),
-            Text(titulo,
-                style: const TextStyle(fontSize: 20, color: Colors.white),
-                textAlign: TextAlign.center),
+            Icon(icono, size: 48, color: Colors.white),
+            const SizedBox(height: 12),
+            Text(
+              titulo,
+              style: const TextStyle(fontSize: 16, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
