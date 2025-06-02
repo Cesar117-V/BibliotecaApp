@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class EstadisticaPrestamos extends StatefulWidget {
   const EstadisticaPrestamos({super.key});
@@ -15,6 +21,7 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
   List<Map<String, dynamic>> _datos = [];
   int? _touchedGroupIndex;
   int? _touchedRodIndex;
+  final GlobalKey _chartKey = GlobalKey();
 
   @override
   void initState() {
@@ -32,6 +39,37 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
       _touchedGroupIndex = null;
       _touchedRodIndex = null;
     });
+  }
+
+  Future<void> _descargarImagen() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _chartKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Guardar imagen como',
+        fileName: 'estadistica_prestamos.png',
+        type: FileType.custom,
+        allowedExtensions: ['png'],
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsBytes(pngBytes);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Imagen guardada en: $outputFile')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al guardar la imagen: $e')),
+      );
+    }
   }
 
   List<String> get _carreras =>
@@ -156,109 +194,123 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                 ],
               ),
               const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.download),
+                    label: const Text('Descargar imagen'),
+                    onPressed: _datos.isEmpty ? null : _descargarImagen,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               Expanded(
                 child: _datos.isEmpty
                     ? const Center(child: Text("No hay datos para este periodo."))
                     : Column(
                         children: [
                           Expanded(
-                            child: BarChart(
-                              BarChartData(
-                                barGroups: _crearBarGroups(),
-                                titlesData: FlTitlesData(
-                                  leftTitles: AxisTitles(
-                                    axisNameWidget: const Text(
-                                      'Distribución de Préstamos por Género y Carrera',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14),
+                            child: RepaintBoundary(
+                              key: _chartKey,
+                              child: BarChart(
+                                BarChartData(
+                                  barGroups: _crearBarGroups(),
+                                  titlesData: FlTitlesData(
+                                    leftTitles: AxisTitles(
+                                      axisNameWidget: const Text(
+                                        'Distribución de Préstamos por Género y Carrera',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14),
+                                      ),
+                                      axisNameSize: 32,
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 40,
+                                        interval: 1,
+                                        getTitlesWidget: (value, meta) {
+                                          if (value % 1 == 0) {
+                                            return Text(
+                                                value.toInt().toString());
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
                                     ),
-                                    axisNameSize: 32,
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      reservedSize: 40,
-                                      interval: 1,
-                                      getTitlesWidget: (value, meta) {
-                                        if (value % 1 == 0) {
-                                          return Text(
-                                              value.toInt().toString());
-                                        }
-                                        return const SizedBox.shrink();
-                                      },
+                                    bottomTitles: AxisTitles(
+                                      axisNameWidget: const Text(
+                                        'Carreras',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14),
+                                      ),
+                                      axisNameSize: 32,
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (value, meta) {
+                                          final idx = value.toInt();
+                                          if (idx >= 0 &&
+                                              idx < carreras.length) {
+                                            return SideTitleWidget(
+                                              axisSide: meta.axisSide,
+                                              child: Text(
+                                                carreras[idx],
+                                                style: TextStyle(
+                                                  fontSize: screenWidth < 350
+                                                      ? 8
+                                                      : 10,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
+                                    ),
+                                    rightTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    topTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
                                     ),
                                   ),
-                                  bottomTitles: AxisTitles(
-                                    axisNameWidget: const Text(
-                                      'Carreras',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14),
-                                    ),
-                                    axisNameSize: 32,
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      getTitlesWidget: (value, meta) {
-                                        final idx = value.toInt();
-                                        if (idx >= 0 &&
-                                            idx < carreras.length) {
-                                          return SideTitleWidget(
-                                            axisSide: meta.axisSide,
-                                            child: Text(
-                                              carreras[idx],
-                                              style: TextStyle(
-                                                fontSize: screenWidth < 350
-                                                    ? 8
-                                                    : 10,
-                                              ),
-                                            ),
+                                  gridData: FlGridData(show: true),
+                                  borderData: FlBorderData(show: false),
+                                  barTouchData: BarTouchData(
+                                    enabled: true,
+                                    touchTooltipData: BarTouchTooltipData(
+                                      tooltipBgColor: Colors.black87,
+                                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                        if (_touchedGroupIndex == groupIndex &&
+                                            _touchedRodIndex == rodIndex) {
+                                          final sexo = sexos[rodIndex];
+                                          return BarTooltipItem(
+                                            '${carreras[group.x.toInt()]}\n'
+                                            '${sexo == 'M' ? 'Masculino' : sexo == 'F' ? 'Femenino' : sexo}: '
+                                            '${rod.toY.toInt()}',
+                                            const TextStyle(color: Colors.white),
                                           );
                                         }
-                                        return const SizedBox.shrink();
+                                        return null;
                                       },
                                     ),
-                                  ),
-                                  rightTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                  topTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                ),
-                                gridData: FlGridData(show: true),
-                                borderData: FlBorderData(show: false),
-                                barTouchData: BarTouchData(
-                                  enabled: true,
-                                  touchTooltipData: BarTouchTooltipData(
-                                    tooltipBgColor: Colors.black87,
-                                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                      if (_touchedGroupIndex == groupIndex &&
-                                          _touchedRodIndex == rodIndex) {
-                                        final sexo = sexos[rodIndex];
-                                        return BarTooltipItem(
-                                          '${carreras[group.x.toInt()]}\n'
-                                          '${sexo == 'M' ? 'Masculino' : sexo == 'F' ? 'Femenino' : sexo}: '
-                                          '${rod.toY.toInt()}',
-                                          const TextStyle(color: Colors.white),
-                                        );
-                                      }
-                                      return null;
+                                    touchCallback: (event, response) {
+                                      setState(() {
+                                        if (event.isInterestedForInteractions &&
+                                            response != null &&
+                                            response.spot != null) {
+                                          _touchedGroupIndex =
+                                              response.spot!.touchedBarGroupIndex;
+                                          _touchedRodIndex =
+                                              response.spot!.touchedRodDataIndex;
+                                        } else {
+                                          _touchedGroupIndex = null;
+                                          _touchedRodIndex = null;
+                                        }
+                                      });
                                     },
                                   ),
-                                  touchCallback: (event, response) {
-                                    setState(() {
-                                      if (event.isInterestedForInteractions &&
-                                          response != null &&
-                                          response.spot != null) {
-                                        _touchedGroupIndex =
-                                            response.spot!.touchedBarGroupIndex;
-                                        _touchedRodIndex =
-                                            response.spot!.touchedRodDataIndex;
-                                      } else {
-                                        _touchedGroupIndex = null;
-                                        _touchedRodIndex = null;
-                                      }
-                                    });
-                                  },
                                 ),
                               ),
                             ),
