@@ -78,116 +78,150 @@ class _EdicionLibroState extends State<EdicionLibro> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
         title: Text(widget.libro == null ? "Nuevo Libro" : "Editar Libro"),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            GestureDetector(
-              onTap: _seleccionarImagen,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage:
-                    _rutaImagen != null ? FileImage(File(_rutaImagen!)) : null,
-                child: _rutaImagen == null
-                    ? const Icon(Icons.camera_alt, size: 50)
-                    : null,
-              ),
+      body: Container(
+        color: const Color(0xFFF0F2F5),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Card(
+            color: const Color(0xFFFFFCF7),
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _tituloController,
-              decoration: const InputDecoration(labelText: "Título del Libro"),
-              validator: (v) =>
-                  v == null || v.isEmpty ? "Campo obligatorio" : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _numPaginasController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Número de Páginas"),
-              validator: (v) =>
-                  v == null || v.isEmpty ? "Campo obligatorio" : null,
-            ),
-            const SizedBox(height: 12),
-            if (widget.libro == null)
-              TextFormField(
-                controller: _stockController,
-                keyboardType: TextInputType.number,
-                decoration:
-                    const InputDecoration(labelText: "Cantidad de ejemplares"),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return "Campo obligatorio";
-                  final value = int.tryParse(v);
-                  if (value == null || value <= 0) {
-                    return "Debe ser un número válido";
-                  }
-                  return null;
-                },
-                onChanged: (v) {
-                  final value = int.tryParse(v);
-                  if (value != null && value > 0) {
-                    _generarCamposAdquisicion(value);
-                  }
-                },
-              ),
-            const SizedBox(height: 12),
-            if (widget.libro == null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children:
-                    List.generate(_adquisicionControllers.length, (index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: TextFormField(
-                      controller: _adquisicionControllers[index],
-                      decoration: InputDecoration(
-                        labelText: "No. Adquisición ${index + 1}",
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    Center(
+                      child: GestureDetector(
+                        onTap: _seleccionarImagen,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: _rutaImagen != null
+                              ? FileImage(File(_rutaImagen!))
+                              : null,
+                          child: _rutaImagen == null
+                              ? const Icon(Icons.camera_alt, size: 50)
+                              : null,
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _tituloController,
+                      decoration:
+                          const InputDecoration(labelText: "Título del Libro"),
                       validator: (v) =>
                           v == null || v.isEmpty ? "Campo obligatorio" : null,
                     ),
-                  );
-                }),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _numPaginasController,
+                      keyboardType: TextInputType.number,
+                      decoration:
+                          const InputDecoration(labelText: "Número de Páginas"),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? "Campo obligatorio" : null,
+                    ),
+                    const SizedBox(height: 12),
+                    if (widget.libro == null)
+                      TextFormField(
+                        controller: _stockController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: "Cantidad de ejemplares"),
+                        validator: (v) {
+                          if (v == null || v.isEmpty)
+                            return "Campo obligatorio";
+                          final value = int.tryParse(v);
+                          if (value == null || value <= 0) {
+                            return "Debe ser un número válido";
+                          }
+                          return null;
+                        },
+                        onChanged: (v) {
+                          final value = int.tryParse(v);
+                          if (value != null && value > 0) {
+                            _generarCamposAdquisicion(value);
+                          }
+                        },
+                      ),
+                    const SizedBox(height: 12),
+                    if (widget.libro == null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(_adquisicionControllers.length,
+                            (index) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: TextFormField(
+                              controller: _adquisicionControllers[index],
+                              decoration: InputDecoration(
+                                labelText: "No. Adquisición ${index + 1}",
+                              ),
+                              validator: (v) => v == null || v.isEmpty
+                                  ? "Campo obligatorio"
+                                  : null,
+                            ),
+                          );
+                        }),
+                      ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(labelText: "Categoría"),
+                      value: _idCategoriaSeleccionada,
+                      items: _listaCategorias
+                          .map((cat) => DropdownMenuItem(
+                              value: cat.id, child: Text(cat.nombre ?? '')))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _idCategoriaSeleccionada = v),
+                      validator: (v) =>
+                          v == null ? "Seleccione una categoría" : null,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(labelText: "Autor"),
+                      value: _idAutorSeleccionado,
+                      items: _listaAutores
+                          .map((a) => DropdownMenuItem(
+                                value: a.id,
+                                child: Text("${a.nombre} ${a.apellidos}"),
+                              ))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _idAutorSeleccionado = v),
+                      validator: (v) =>
+                          v == null ? "Seleccione un autor" : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _descripcionController,
+                      decoration:
+                          const InputDecoration(labelText: "Descripción"),
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _guardarLibro,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text("Guardar"),
+                    ),
+                  ],
+                ),
               ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: "Categoría"),
-              value: _idCategoriaSeleccionada,
-              items: _listaCategorias
-                  .map((cat) => DropdownMenuItem(
-                      value: cat.id, child: Text(cat.nombre ?? '')))
-                  .toList(),
-              onChanged: (v) => setState(() => _idCategoriaSeleccionada = v),
-              validator: (v) => v == null ? "Seleccione una categoría" : null,
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: "Autor"),
-              value: _idAutorSeleccionado,
-              items: _listaAutores
-                  .map((a) => DropdownMenuItem(
-                        value: a.id,
-                        child: Text("${a.nombre} ${a.apellidos}"),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _idAutorSeleccionado = v),
-              validator: (v) => v == null ? "Seleccione un autor" : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descripcionController,
-              decoration: const InputDecoration(labelText: "Descripción"),
-              maxLines: 4,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _guardarLibro,
-              child: const Text("Guardar"),
-            ),
-          ],
+          ),
         ),
       ),
     );

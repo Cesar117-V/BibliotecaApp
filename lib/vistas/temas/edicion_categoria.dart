@@ -36,24 +36,30 @@ class _EdicionCategoriaState extends State<EdicionCategoria> {
         title: Text(
             widget.categoria == null ? "Nueva Categoría" : "Editar Categoría"),
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: const InputDecoration(labelText: "Nombre"),
-                validator: (value) =>
-                    value!.trim().isEmpty ? "Campo obligatorio" : null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _nombreController,
+                    decoration: const InputDecoration(labelText: "Nombre"),
+                    validator: (value) =>
+                        value!.trim().isEmpty ? "Campo obligatorio" : null,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _guardarCategoria,
+                    child: const Text("Guardar"),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarCategoria,
-                child: const Text("Guardar"),
-              ),
-            ],
+            ),
           ),
         ),
       ),

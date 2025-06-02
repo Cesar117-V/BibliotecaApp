@@ -111,9 +111,14 @@ class _InventarioScreenState extends State<InventarioScreen>
       body: Container(
         color: Colors.grey[100],
         padding: const EdgeInsets.all(8),
-        child: IndexedStack(
-          index: _activeIndex,
-          children: _views,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: IndexedStack(
+              index: _activeIndex,
+              children: _views,
+            ),
+          ),
         ),
       ),
       floatingActionButton: _buildFloatingButton(),

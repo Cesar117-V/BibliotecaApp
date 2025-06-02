@@ -39,47 +39,69 @@ class _EdicionAutorState extends State<EdicionAutor> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
         title: Text(widget.autor == null ? "Nuevo Autor" : "Editar Autor"),
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: const InputDecoration(labelText: "Nombre"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Campo obligatorio" : null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  TextFormField(
+                    controller: _nombreController,
+                    decoration: const InputDecoration(
+                      labelText: "Nombre",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Campo obligatorio"
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _apellidoController,
+                    decoration: const InputDecoration(
+                      labelText: "Apellido",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Campo obligatorio"
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _correoController,
+                    decoration: const InputDecoration(
+                      labelText: "Correo electrónico",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Campo obligatorio";
+                      }
+                      if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")
+                          .hasMatch(value)) {
+                        return "Correo inválido";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _guardarAutor,
+                      child: const Text("Guardar"),
+                    ),
+                  ),
+                ],
               ),
-              TextFormField(
-                controller: _apellidoController,
-                decoration: const InputDecoration(labelText: "Apellido"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Campo obligatorio" : null,
-              ),
-              TextFormField(
-                controller: _correoController,
-                decoration:
-                    const InputDecoration(labelText: "Correo electrónico"),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Campo obligatorio";
-                  }
-                  if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")
-                      .hasMatch(value)) {
-                    return "Correo inválido";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarAutor,
-                child: const Text("Guardar"),
-              ),
-            ],
+            ),
           ),
         ),
       ),

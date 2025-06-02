@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:biblioteca_app/modelo/categoria.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:biblioteca_app/vistas/temas/edicion_categoria.dart';
-import 'package:biblioteca_app/vistas/temas/libros_por_categoria.dart'; // 👈 Import necesario
+import 'package:biblioteca_app/vistas/temas/libros_por_categoria.dart';
 
 Future<bool> confirmarEliminacion(BuildContext context, String mensaje) async {
   return await showDialog<bool>(
@@ -33,7 +33,9 @@ class ListaCategorias extends StatefulWidget {
 }
 
 class ListaCategoriasState extends State<ListaCategorias> {
-  List<Categoria> _categorias = [];
+  final TextEditingController _searchController = TextEditingController();
+  List<Categoria> _categoriasOriginales = [];
+  List<Categoria> _categoriasFiltradas = [];
 
   @override
   void initState() {
@@ -45,7 +47,19 @@ class ListaCategoriasState extends State<ListaCategorias> {
     final categorias = await Dao.listaCategorias();
     if (!mounted) return;
     setState(() {
-      _categorias = categorias;
+      _categoriasOriginales = categorias;
+      _categoriasFiltradas = categorias;
+    });
+  }
+
+  void _filtrarCategorias(String query) {
+    final filtradas = _categoriasOriginales.where((categoria) {
+      final nombre = categoria.nombre?.toLowerCase() ?? '';
+      return nombre.contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      _categoriasFiltradas = filtradas;
     });
   }
 
@@ -73,51 +87,95 @@ class ListaCategoriasState extends State<ListaCategorias> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _categorias.length,
-      itemBuilder: (context, index) {
-        final categoria = _categorias[index];
-        return Card(
-          elevation: 3,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ListTile(
-            title: Text(categoria.nombre ?? ""),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'Ver libros de la categoría',
-                  icon: const Icon(Icons.menu_book, color: Colors.blueAccent),
-                  onPressed: () => _verLibrosDeCategoria(categoria),
+    return Scaffold(
+      body: SafeArea(
+        child: NotificationListener<UserScrollNotification>(
+          onNotification: (_) {
+            FocusScope.of(context).unfocus(); // Oculta teclado al hacer scroll
+            return false;
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                backgroundColor: Colors.white,
+                elevation: 1,
+                automaticallyImplyLeading: false,
+                title: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar categoría...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: _filtrarCategorias,
+                  ),
                 ),
-                IconButton(
-                  tooltip: 'Editar categoría',
-                  icon: const Icon(Icons.edit, color: Colors.amber),
-                  onPressed: () => _editarCategoria(categoria),
-                ),
-                IconButton(
-                  tooltip: 'Eliminar categoría',
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () async {
-                    final confirmar = await confirmarEliminacion(
-                      context,
-                      "¿Deseas eliminar esta categoría?",
+                toolbarHeight: 70,
+                pinned: false,
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final categoria = _categoriasFiltradas[index];
+                    return Card(
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        title: Text(categoria.nombre ?? ""),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Ver libros de la categoría',
+                              icon: const Icon(Icons.menu_book,
+                                  color: Colors.blueAccent),
+                              onPressed: () => _verLibrosDeCategoria(categoria),
+                            ),
+                            IconButton(
+                              tooltip: 'Editar categoría',
+                              icon: const Icon(Icons.edit, color: Colors.amber),
+                              onPressed: () => _editarCategoria(categoria),
+                            ),
+                            IconButton(
+                              tooltip: 'Eliminar categoría',
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () async {
+                                final confirmar = await confirmarEliminacion(
+                                  context,
+                                  "¿Deseas eliminar esta categoría?",
+                                );
+                                if (confirmar) {
+                                  await Dao.deleteCategoria(categoria.id!);
+                                  if (mounted) await cargarDatos();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     );
-                    if (confirmar) {
-                      await Dao.deleteCategoria(categoria.id!);
-                      if (mounted) await cargarDatos();
-                    }
                   },
+                  childCount: _categoriasFiltradas.length,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

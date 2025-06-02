@@ -79,42 +79,64 @@ class _GestionBibliotecariosScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Gestión de Bibliotecarios')),
-      body: bibliotecarios.isEmpty
-          ? const Center(child: Text('No hay bibliotecarios registrados'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: bibliotecarios.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (context, index) {
-                final b = bibliotecarios[index];
-                return ListTile(
-                  leading: const Icon(Icons.person),
-                  title: Text('${b.nombre} ${b.apellidos}'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Correo: ${b.correo}'),
-                      Text('Código: ${b.codigo}'),
-                      Text('Matrícula: ${b.matricula}'),
-                      Text('Carrera: ${b.carrera}'),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _editarBibliotecario(b),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (bibliotecarios.isEmpty) {
+            return const Center(
+                child: Text('No hay bibliotecarios registrados'));
+          }
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView.separated(
+                  itemCount: bibliotecarios.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final b = bibliotecarios[index];
+                    return Card(
+                      elevation: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: ListTile(
+                          leading: const Icon(Icons.person),
+                          title: Text('${b.nombre} ${b.apellidos}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Correo: ${b.correo}'),
+                              Text('Código: ${b.codigo}'),
+                              Text('Matrícula: ${b.matricula}'),
+                              Text('Carrera: ${b.carrera}'),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _editarBibliotecario(b),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _confirmarEliminar(b.id!),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmarEliminar(b.id!),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _mostrarFormulario,
         tooltip: 'Agregar bibliotecario',

@@ -79,44 +79,55 @@ class _GestionTrabajadoresScreenState extends State<GestionTrabajadoresScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Gestión de Trabajadores')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: trabajadores.isEmpty
-            ? const Center(child: Text('No hay trabajadores registrados'))
-            : ListView.builder(
-                itemCount: trabajadores.length,
-                itemBuilder: (context, index) {
-                  final t = trabajadores[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: const Icon(Icons.person),
-                      title: Text('${t.nombre} ${t.apellidos}'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Correo: ${t.correo}'),
-                          Text('Código: ${t.codigo}'),
-                        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (trabajadores.isEmpty) {
+            return const Center(child: Text('No hay trabajadores registrados'));
+          }
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView.builder(
+                  itemCount: trabajadores.length,
+                  itemBuilder: (context, index) {
+                    final t = trabajadores[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: const Icon(Icons.person),
+                        title: Text('${t.nombre} ${t.apellidos}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Correo: ${t.correo}'),
+                            Text('Código: ${t.codigo}'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () =>
+                                  _agregarOEditarTrabajador(trabajador: t),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _eliminarTrabajador(t.id!),
+                            ),
+                          ],
+                        ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () =>
-                                _agregarOEditarTrabajador(trabajador: t),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _eliminarTrabajador(t.id!),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
+            ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _agregarOEditarTrabajador,

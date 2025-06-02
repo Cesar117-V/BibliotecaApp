@@ -72,13 +72,10 @@ class _EdicionDevolucionState extends State<EdicionDevolucion> {
       if (widget.devolucion == null) {
         await Dao.createDevolucion(devolucion);
         await Dao.liberarLibrosPorDevolucion(devolucion.idPrestamo);
-
-        // 🔁 Mover esta llamada antes de eliminar el detalle
         await Dao.guardarHistorialPrestamo(
           devolucion.idPrestamo,
           devolucion.fechaEntregaReal,
         );
-
         await Dao.eliminarDetallePrestamoPorIdPrestamo(devolucion.idPrestamo);
         await Dao.updatePrestamoActivo(devolucion.idPrestamo, false);
       } else {
@@ -134,104 +131,133 @@ class _EdicionDevolucionState extends State<EdicionDevolucion> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Registrar Devolución")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              DropdownButtonFormField<Prestamo>(
-                decoration:
-                    const InputDecoration(labelText: "Seleccionar préstamo"),
-                value: prestamoSeleccionado,
-                items: prestamosActivos.map((p) {
-                  return DropdownMenuItem(
-                    value: p,
-                    child: Text("${p.nombreSolicitante} - ${p.matricula}"),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    prestamoSeleccionado = value;
-                    estadoSeleccionado = 'En buen estado';
-                    observacionesController.text = "Sin observaciones";
-                    fechaEntrega = DateTime.now();
-                  });
-                },
-                validator: (value) =>
-                    value == null ? "Selecciona un préstamo" : null,
-              ),
-              if (prestamoSeleccionado != null)
-                Card(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Carrera: ${prestamoSeleccionado!.carrera}"),
-                        Text(
-                            "Libros: ${prestamoSeleccionado!.tituloLibro ?? 'Desconocido'}"),
-                        Text(
-                            "Préstamo: ${_formatearFecha(prestamoSeleccionado!.fechaPrestamo)}"),
-                        Text(
-                            "Devolución esperada: ${_formatearFecha(prestamoSeleccionado!.fechaDevolucion)}"),
-                      ],
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
+        title: const Text("Registrar Devolución"),
+      ),
+      body: Container(
+        color: const Color(0xFFF0F2F5),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Card(
+            color: const Color(0xFFFFFCF7),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    DropdownButtonFormField<Prestamo>(
+                      decoration: const InputDecoration(
+                          labelText: "Seleccionar préstamo"),
+                      value: prestamoSeleccionado,
+                      items: prestamosActivos.map((p) {
+                        return DropdownMenuItem(
+                          value: p,
+                          child:
+                              Text("${p.nombreSolicitante} - ${p.matricula}"),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          prestamoSeleccionado = value;
+                          estadoSeleccionado = 'En buen estado';
+                          observacionesController.text = "Sin observaciones";
+                          fechaEntrega = DateTime.now();
+                        });
+                      },
+                      validator: (value) =>
+                          value == null ? "Selecciona un préstamo" : null,
                     ),
-                  ),
-                ),
-              TextFormField(
-                controller: trabajadorController,
-                readOnly: true,
-                decoration: const InputDecoration(labelText: "Trabajador"),
-              ),
-              ListTile(
-                title: const Text("Fecha de entrega"),
-                subtitle: Text(
-                  fechaEntrega != null
-                      ? "${fechaEntrega!.day}/${fechaEntrega!.month}/${fechaEntrega!.year}"
-                      : "Seleccione una fecha",
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _seleccionarFechaEntrega,
-              ),
-              DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Estado del libro"),
-                value: estadoSeleccionado,
-                items: estadosLibro.map((estado) {
-                  return DropdownMenuItem(
-                    value: estado,
-                    child: Text(
-                      estado,
-                      style: TextStyle(color: _colorPorEstado(estado)),
+                    const SizedBox(height: 20),
+                    if (prestamoSeleccionado != null)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Carrera: ${prestamoSeleccionado!.carrera}"),
+                              Text(
+                                  "Libros: ${prestamoSeleccionado!.tituloLibro ?? 'Desconocido'}"),
+                              Text(
+                                  "Préstamo: ${_formatearFecha(prestamoSeleccionado!.fechaPrestamo)}"),
+                              Text(
+                                  "Devolución esperada: ${_formatearFecha(prestamoSeleccionado!.fechaDevolucion)}"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    TextFormField(
+                      controller: trabajadorController,
+                      readOnly: true,
+                      decoration:
+                          const InputDecoration(labelText: "Trabajador"),
                     ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => estadoSeleccionado = value);
-                },
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Selecciona un estado'
-                    : null,
-                style: TextStyle(
-                  color: estadoSeleccionado != null
-                      ? _colorPorEstado(estadoSeleccionado!)
-                      : Colors.black,
+                    const SizedBox(height: 20),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text("Fecha de entrega"),
+                      subtitle: Text(
+                        fechaEntrega != null
+                            ? "${fechaEntrega!.day}/${fechaEntrega!.month}/${fechaEntrega!.year}"
+                            : "Seleccione una fecha",
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: _seleccionarFechaEntrega,
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      decoration:
+                          const InputDecoration(labelText: "Estado del libro"),
+                      value: estadoSeleccionado,
+                      items: estadosLibro.map((estado) {
+                        return DropdownMenuItem(
+                          value: estado,
+                          child: Text(
+                            estado,
+                            style: TextStyle(color: _colorPorEstado(estado)),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => estadoSeleccionado = value);
+                      },
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Selecciona un estado'
+                          : null,
+                      style: TextStyle(
+                        color: estadoSeleccionado != null
+                            ? _colorPorEstado(estadoSeleccionado!)
+                            : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: observacionesController,
+                      decoration:
+                          const InputDecoration(labelText: "Observaciones"),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: _guardar,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text("Guardar"),
+                    ),
+                  ],
                 ),
               ),
-              TextFormField(
-                controller: observacionesController,
-                decoration: const InputDecoration(labelText: "Observaciones"),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardar,
-                child: const Text("Guardar"),
-              ),
-            ],
+            ),
           ),
         ),
       ),

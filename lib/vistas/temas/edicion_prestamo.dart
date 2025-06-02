@@ -20,21 +20,15 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController matriculaController = TextEditingController();
-  final TextEditingController nombreSolicitanteController = TextEditingController();
+  final TextEditingController nombreSolicitanteController =
+      TextEditingController();
   final TextEditingController trabajadorController = TextEditingController();
   final TextEditingController observacionesController = TextEditingController();
 
   DateTime? fechaDevolucion;
   DateTime? fechaPrestamo;
 
-  final List<String> carreras = [
-    'IINF',
-    'CP',
-    'IGE',
-    'IC',
-    'ISC',
-  ];
-
+  final List<String> carreras = ['IINF', 'CP', 'IGE', 'IC', 'ISC'];
   String? carreraSeleccionada;
 
   final List<String> generos = ['M', 'F'];
@@ -58,8 +52,8 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       final autores = results[0] as List<Autor>;
       final categorias = results[1] as List<Categoria>;
       setState(() {
-        mapAutores = { for (var a in autores) a.id!: a.nombre! };
-        mapCategorias = { for (var c in categorias) c.id!: c.nombre! };
+        mapAutores = {for (var a in autores) a.id!: a.nombre!};
+        mapCategorias = {for (var c in categorias) c.id!: c.nombre!};
       });
     });
 
@@ -108,9 +102,13 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
 
   void _guardarPrestamo() async {
     if (_formKey.currentState!.validate()) {
-      if (fechaPrestamo == null || fechaDevolucion == null || cantidadSeleccionada == null || librosSeleccionados.length != cantidadSeleccionada) {
+      if (fechaPrestamo == null ||
+          fechaDevolucion == null ||
+          cantidadSeleccionada == null ||
+          librosSeleccionados.length != cantidadSeleccionada) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Es necesario llenar todos los apartados')),
+          const SnackBar(
+              content: Text('Es necesario llenar todos los apartados')),
         );
         return;
       }
@@ -122,7 +120,8 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
         carrera: carreraSeleccionada!,
         sexo: generoSeleccionado,
         cantidadLibros: cantidadSeleccionada!,
-        numeroClasificador: librosSeleccionados.map((l) => l.numAdquisicion).join(', '),
+        numeroClasificador:
+            librosSeleccionados.map((l) => l.numAdquisicion).join(', '),
         trabajador: trabajadorController.text,
         fechaPrestamo: fechaPrestamo?.toIso8601String(),
         fechaDevolucion: fechaDevolucion?.toIso8601String() ?? '',
@@ -167,7 +166,8 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
       Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Es necesario llenar todos los apartados')),
+        const SnackBar(
+            content: Text('Es necesario llenar todos los apartados')),
       );
     }
   }
@@ -195,133 +195,159 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Préstamo")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: matriculaController,
-                decoration: const InputDecoration(labelText: "Matrícula"),
-                validator: (value) =>
-                    value!.isEmpty ? 'Campo obligatorio' : null,
-              ),
-              TextFormField(
-                controller: nombreSolicitanteController,
-                decoration: const InputDecoration(labelText: "Nombre del Solicitante"),
-                validator: (value) =>
-                    value!.isEmpty ? 'Campo obligatorio' : null,
-              ),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Carrera del Solicitante"),
-                value: carreraSeleccionada,
-                items: carreras.map((carrera) {
-                  return DropdownMenuItem(
-                    value: carrera,
-                    child: Text(carrera),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    carreraSeleccionada = value;
-                  });
-                },
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Seleccione una carrera'
-                    : null,
-              ),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Género"),
-                value: generoSeleccionado,
-                items: generos.map((g) {
-                  return DropdownMenuItem(
-                    value: g,
-                    child: Text(g),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    generoSeleccionado = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Seleccione un género' : null,
-              ),
-              DropdownButtonFormField<int>(
-                decoration: const InputDecoration(labelText: "Cantidad de Libros"),
-                value: cantidadSeleccionada,
-                items: List.generate(3, (i) => i + 1)
-                    .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    cantidadSeleccionada = value;
-                    librosSeleccionados = [];
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Seleccione la cantidad de libros' : null,
-              ),
-              const SizedBox(height: 10),
-              if (cantidadSeleccionada != null)
-                ElevatedButton(
-                  onPressed: _irASeleccionLibros,
-                  child: const Text('Seleccionar Libros'),
-                ),
-              const SizedBox(height: 10),
-              if (librosSeleccionados.isNotEmpty)
-                ...librosSeleccionados.map((libro) => Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        title: Text(libro.titulo ?? 'Sin título'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Adquisición: ${libro.numAdquisicion ?? ''}'),
-                            Text('Autor: ${mapAutores[libro.idAutor] ?? 'Desconocido'}'),
-                            Text('Categoría: ${mapCategorias[libro.idCategoria] ?? 'Sin categoría'}'),
-                          ],
-                        ),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
+        title: const Text("Préstamo"),
+      ),
+      body: Container(
+        color: const Color(0xFFF0F2F5),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Card(
+            color: const Color(0xFFFFFCF7),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    TextFormField(
+                      controller: matriculaController,
+                      decoration: const InputDecoration(labelText: "Matrícula"),
+                      validator: (value) =>
+                          value!.isEmpty ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: nombreSolicitanteController,
+                      decoration: const InputDecoration(
+                          labelText: "Nombre del Solicitante"),
+                      validator: (value) =>
+                          value!.isEmpty ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                          labelText: "Carrera del Solicitante"),
+                      value: carreraSeleccionada,
+                      items: carreras
+                          .map((carrera) => DropdownMenuItem(
+                              value: carrera, child: Text(carrera)))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => carreraSeleccionada = value),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Seleccione una carrera'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: "Género"),
+                      value: generoSeleccionado,
+                      items: generos
+                          .map(
+                              (g) => DropdownMenuItem(value: g, child: Text(g)))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => generoSeleccionado = value),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Seleccione un género'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(
+                          labelText: "Cantidad de Libros"),
+                      value: cantidadSeleccionada,
+                      items: List.generate(3, (i) => i + 1)
+                          .map((n) =>
+                              DropdownMenuItem(value: n, child: Text('$n')))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          cantidadSeleccionada = value;
+                          librosSeleccionados = [];
+                        });
+                      },
+                      validator: (value) => value == null
+                          ? 'Seleccione la cantidad de libros'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    if (cantidadSeleccionada != null)
+                      ElevatedButton(
+                        onPressed: _irASeleccionLibros,
+                        child: const Text('Seleccionar Libros'),
                       ),
-                    )),
-              TextFormField(
-                controller: trabajadorController,
-                decoration: const InputDecoration(labelText: "Trabajador"),
-                readOnly: true,
-              ),
-              ListTile(
-                title: const Text("Fecha del Préstamo"),
-                subtitle: Text(
-                  fechaPrestamo != null
-                      ? "${fechaPrestamo!.day}/${fechaPrestamo!.month}/${fechaPrestamo!.year}"
-                      : "Seleccione una fecha",
+                    const SizedBox(height: 16),
+                    if (librosSeleccionados.isNotEmpty)
+                      ...librosSeleccionados.map((libro) => Card(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: ListTile(
+                              title: Text(libro.titulo ?? 'Sin título'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      'Adquisición: ${libro.numAdquisicion ?? ''}'),
+                                  Text(
+                                      'Autor: ${mapAutores[libro.idAutor] ?? 'Desconocido'}'),
+                                  Text(
+                                      'Categoría: ${mapCategorias[libro.idCategoria] ?? 'Sin categoría'}'),
+                                ],
+                              ),
+                            ),
+                          )),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: trabajadorController,
+                      decoration:
+                          const InputDecoration(labelText: "Trabajador"),
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: const Text("Fecha del Préstamo"),
+                      subtitle: Text(
+                        fechaPrestamo != null
+                            ? "${fechaPrestamo!.day}/${fechaPrestamo!.month}/${fechaPrestamo!.year}"
+                            : "Seleccione una fecha",
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: _seleccionarFechaPrestamo,
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      title: const Text("Fecha de Devolución"),
+                      subtitle: Text(
+                        fechaDevolucion != null
+                            ? "${fechaDevolucion!.day}/${fechaDevolucion!.month}/${fechaDevolucion!.year}"
+                            : "Seleccione una fecha",
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: _seleccionarFechaDevolucion,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: observacionesController,
+                      decoration:
+                          const InputDecoration(labelText: "Observaciones"),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _guardarPrestamo,
+                      child: const Text("Guardar"),
+                    ),
+                  ],
                 ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _seleccionarFechaPrestamo,
               ),
-              ListTile(
-                title: const Text("Fecha de Devolución"),
-                subtitle: Text(
-                  fechaDevolucion != null
-                      ? "${fechaDevolucion!.day}/${fechaDevolucion!.month}/${fechaDevolucion!.year}"
-                      : "Seleccione una fecha",
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _seleccionarFechaDevolucion,
-              ),
-              TextFormField(
-                controller: observacionesController,
-                decoration: const InputDecoration(labelText: "Observaciones"),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarPrestamo,
-                child: const Text("Guardar"),
-              ),
-            ],
+            ),
           ),
         ),
       ),
