@@ -222,6 +222,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                       validator: (value) =>
                           value!.isEmpty ? 'Campo obligatorio' : null,
                     ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: nombreSolicitanteController,
                       decoration: const InputDecoration(
@@ -229,6 +230,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                       validator: (value) =>
                           value!.isEmpty ? 'Campo obligatorio' : null,
                     ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                           labelText: "Carrera del Solicitante"),
@@ -243,6 +245,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                           ? 'Seleccione una carrera'
                           : null,
                     ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: "Género"),
                       value: generoSeleccionado,
@@ -256,6 +259,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                           ? 'Seleccione un género'
                           : null,
                     ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
                       decoration: const InputDecoration(
                           labelText: "Cantidad de Libros"),
@@ -274,13 +278,13 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                           ? 'Seleccione la cantidad de libros'
                           : null,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     if (cantidadSeleccionada != null)
                       ElevatedButton(
                         onPressed: _irASeleccionLibros,
                         child: const Text('Seleccionar Libros'),
                       ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     if (librosSeleccionados.isNotEmpty)
                       ...librosSeleccionados.map((libro) => Card(
                             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -299,12 +303,14 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                               ),
                             ),
                           )),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: trabajadorController,
                       decoration:
                           const InputDecoration(labelText: "Trabajador"),
                       readOnly: true,
                     ),
+                    const SizedBox(height: 16),
                     ListTile(
                       title: const Text("Fecha del Préstamo"),
                       subtitle: Text(
@@ -315,6 +321,7 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                       trailing: const Icon(Icons.calendar_today),
                       onTap: _seleccionarFechaPrestamo,
                     ),
+                    const SizedBox(height: 8),
                     ListTile(
                       title: const Text("Fecha de Devolución"),
                       subtitle: Text(
@@ -325,13 +332,14 @@ class _EdicionPrestamoState extends State<EdicionPrestamo> {
                       trailing: const Icon(Icons.calendar_today),
                       onTap: _seleccionarFechaDevolucion,
                     ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: observacionesController,
                       decoration:
                           const InputDecoration(labelText: "Observaciones"),
                       maxLines: 3,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _guardarPrestamo,
                       child: const Text("Guardar"),
