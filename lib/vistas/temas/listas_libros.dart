@@ -34,7 +34,9 @@ class ListaLibros extends StatefulWidget {
 }
 
 class ListaLibrosState extends State<ListaLibros> {
+  final TextEditingController _searchController = TextEditingController();
   Map<String, List<Libro>> _librosAgrupados = {};
+  Map<String, List<Libro>> _librosOriginales = {};
 
   @override
   void initState() {
@@ -60,7 +62,21 @@ class ListaLibrosState extends State<ListaLibros> {
 
     if (!mounted) return;
     setState(() {
+      _librosOriginales = agrupadosOrdenados;
       _librosAgrupados = agrupadosOrdenados;
+    });
+  }
+
+  void _filtrarLibros(String query) {
+    final resultado = <String, List<Libro>>{};
+    _librosOriginales.forEach((titulo, listaLibros) {
+      if (titulo.toLowerCase().contains(query.toLowerCase())) {
+        resultado[titulo] = listaLibros;
+      }
+    });
+
+    setState(() {
+      _librosAgrupados = resultado;
     });
   }
 
@@ -235,98 +251,149 @@ class ListaLibrosState extends State<ListaLibros> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: _librosAgrupados.entries.map((entry) {
-        final titulo = entry.key;
-        final libros = entry.value;
+    return Scaffold(
+      body: SafeArea(
+        child: NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            FocusScope.of(context).unfocus(); // Oculta teclado al hacer scroll
+            return false;
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                backgroundColor: Colors.white,
+                elevation: 1,
+                automaticallyImplyLeading: false,
+                title: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por título...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: _filtrarLibros,
+                  ),
+                ),
+                toolbarHeight: 70,
+                pinned: false,
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final entry = _librosAgrupados.entries.elementAt(index);
+                    final titulo = entry.key;
+                    final libros = entry.value;
 
-        return Card(
-          child: ListTile(
-            title: Text(
-              "$titulo (${libros.where((l) => l.disponible ?? true).length} disponibles)",
-            ),
-            subtitle: Text("Páginas: ${libros.first.numeroPaginas ?? 0}"),
-            leading: libros.first.imagen != null
-                ? CircleAvatar(
-                    backgroundImage: FileImage(File(libros.first.imagen!)))
-                : const CircleAvatar(child: Icon(Icons.book)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove_red_eye),
-                  tooltip: 'Ver descripción',
-                  onPressed: () {
-                    final libro = libros.first;
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text(libro.titulo ?? 'Sin título'),
-                        content: SingleChildScrollView(
-                          child: Text(
-                            libro.descripcion?.isNotEmpty == true
-                                ? libro.descripcion!
-                                : 'Este libro no tiene descripción.',
-                          ),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: ListTile(
+                        title: Text(
+                          "$titulo (${libros.where((l) => l.disponible ?? true).length} disponibles)",
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cerrar'),
-                          ),
-                        ],
+                        subtitle:
+                            Text("Páginas: ${libros.first.numeroPaginas ?? 0}"),
+                        leading: libros.first.imagen != null
+                            ? CircleAvatar(
+                                backgroundImage:
+                                    FileImage(File(libros.first.imagen!)))
+                            : const CircleAvatar(child: Icon(Icons.book)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove_red_eye),
+                              tooltip: 'Ver descripción',
+                              onPressed: () {
+                                final libro = libros.first;
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: Text(libro.titulo ?? 'Sin título'),
+                                    content: SingleChildScrollView(
+                                      child: Text(
+                                        libro.descripcion?.isNotEmpty == true
+                                            ? libro.descripcion!
+                                            : 'Este libro no tiene descripción.',
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Cerrar'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              tooltip: 'Opciones',
+                              onSelected: (value) async {
+                                final libroBase = libros.first;
+
+                                if (value == 'editar') {
+                                  await _editarLibro(libroBase);
+                                }
+
+                                if (value == 'eliminar') {
+                                  final confirmar = await confirmarEliminacion(
+                                    context,
+                                    "¿Deseas eliminar todos los ejemplares de \"$titulo\"?",
+                                  );
+
+                                  if (confirmar) {
+                                    for (var libro in libros) {
+                                      await Dao.deleteLibro(libro.id!);
+                                    }
+                                    if (mounted) await cargarDatos();
+                                  }
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'editar',
+                                  child: ListTile(
+                                    leading:
+                                        Icon(Icons.edit, color: Colors.amber),
+                                    title: Text('Editar todos los ejemplares'),
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'eliminar',
+                                  child: ListTile(
+                                    leading:
+                                        Icon(Icons.delete, color: Colors.red),
+                                    title:
+                                        Text('Eliminar todos los ejemplares'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        onTap: () => _mostrarEjemplaresModal(libros),
                       ),
                     );
                   },
+                  childCount: _librosAgrupados.length,
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: 'Opciones',
-                  onSelected: (value) async {
-                    final libroBase = libros.first;
-
-                    if (value == 'editar') {
-                      await _editarLibro(libroBase);
-                    }
-
-                    if (value == 'eliminar') {
-                      final confirmar = await confirmarEliminacion(
-                        context,
-                        "¿Deseas eliminar todos los ejemplares de \"$titulo\"?",
-                      );
-
-                      if (confirmar) {
-                        for (var libro in libros) {
-                          await Dao.deleteLibro(libro.id!);
-                        }
-                        if (mounted) await cargarDatos();
-                      }
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'editar',
-                      child: ListTile(
-                        leading: Icon(Icons.edit, color: Colors.amber),
-                        title: Text('Editar todos los ejemplares'),
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'eliminar',
-                      child: ListTile(
-                        leading: Icon(Icons.delete, color: Colors.red),
-                        title: Text('Eliminar todos los ejemplares'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            onTap: () => _mostrarEjemplaresModal(libros),
+              ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 }
