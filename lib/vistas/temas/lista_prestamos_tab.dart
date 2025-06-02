@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'lista_prestamos.dart';
 import 'lista_prestamos_historial.dart';
-import 'edicion_prestamo.dart'; // Asegúrate de importar esta pantalla
+import 'edicion_prestamo.dart';
 
 class ListaPrestamosTab extends StatefulWidget {
   const ListaPrestamosTab({super.key});
@@ -20,7 +20,7 @@ class _ListaPrestamosTabState extends State<ListaPrestamosTab> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.blue,
+          backgroundColor: const Color(0xFF0D47A1),
           title: const Text("Préstamos"),
           bottom: const TabBar(
             indicatorColor: Colors.white,
@@ -37,13 +37,27 @@ class _ListaPrestamosTabState extends State<ListaPrestamosTab> {
           ),
         ),
         body: Container(
-          color: Colors.grey[100],
-          padding: const EdgeInsets.all(8),
-          child: TabBarView(
-            children: [
-              ListaPrestamos(key: prestamosKey),
-              const ListaPrestamosHistorial(),
-            ],
+          width: double.infinity,
+          color: const Color(0xFFF0F2F5),
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              color: const Color(0xFFFFFCF7),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: TabBarView(
+                  children: [
+                    ListaPrestamos(key: prestamosKey),
+                    const ListaPrestamosHistorial(),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton(
@@ -56,7 +70,7 @@ class _ListaPrestamosTabState extends State<ListaPrestamosTab> {
               MaterialPageRoute(builder: (_) => const EdicionPrestamo()),
             );
             if (result == true) {
-              prestamosKey.currentState?.cargarDatos(); // ✅ actualiza lista
+              prestamosKey.currentState?.cargarDatos();
             }
           },
         ),

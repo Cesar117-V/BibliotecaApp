@@ -48,6 +48,8 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
     if (_activeIndex == 0) {
       return FloatingActionButton(
         heroTag: 'fabPrestamos',
+        backgroundColor: Colors.purple.shade100,
+        child: const Icon(Icons.add, color: Colors.deepPurple),
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -57,7 +59,6 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
             prestamosKey.currentState?.cargarDatos(); // ✅ recarga automática
           }
         },
-        child: const Icon(Icons.add),
       );
     }
     return null; // No mostrar FAB en historial
@@ -67,6 +68,7 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
         title: const Text("Préstamos"),
         bottom: TabBar(
           controller: _tabController,
@@ -81,11 +83,25 @@ class _PrestamosTabScreenState extends State<PrestamosTabScreen>
         ),
       ),
       body: Container(
-        color: Colors.grey[100],
+        color: const Color(0xFFF0F2F5),
         padding: const EdgeInsets.all(8),
-        child: TabBarView(
-          controller: _tabController,
-          children: _views,
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: const Color(0xFFFFFCF7),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: TabBarView(
+                controller: _tabController,
+                children: _views,
+              ),
+            ),
+          ),
         ),
       ),
       floatingActionButton: _buildFloatingButton(),

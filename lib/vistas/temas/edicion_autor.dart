@@ -41,45 +41,53 @@ class _EdicionAutorState extends State<EdicionAutor> {
       appBar: AppBar(
         title: Text(widget.autor == null ? "Nuevo Autor" : "Editar Autor"),
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: const InputDecoration(labelText: "Nombre"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Campo obligatorio" : null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  TextFormField(
+                    controller: _nombreController,
+                    decoration: const InputDecoration(labelText: "Nombre"),
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Campo obligatorio"
+                        : null,
+                  ),
+                  TextFormField(
+                    controller: _apellidoController,
+                    decoration: const InputDecoration(labelText: "Apellido"),
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Campo obligatorio"
+                        : null,
+                  ),
+                  TextFormField(
+                    controller: _correoController,
+                    decoration:
+                        const InputDecoration(labelText: "Correo electrónico"),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Campo obligatorio";
+                      }
+                      if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}")
+                          .hasMatch(value)) {
+                        return "Correo inválido";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _guardarAutor,
+                    child: const Text("Guardar"),
+                  ),
+                ],
               ),
-              TextFormField(
-                controller: _apellidoController,
-                decoration: const InputDecoration(labelText: "Apellido"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Campo obligatorio" : null,
-              ),
-              TextFormField(
-                controller: _correoController,
-                decoration:
-                    const InputDecoration(labelText: "Correo electrónico"),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Campo obligatorio";
-                  }
-                  if (!RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")
-                      .hasMatch(value)) {
-                    return "Correo inválido";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _guardarAutor,
-                child: const Text("Guardar"),
-              ),
-            ],
+            ),
           ),
         ),
       ),
