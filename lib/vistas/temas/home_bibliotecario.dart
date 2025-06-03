@@ -11,6 +11,7 @@ class HomeBibliotecario extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0D47A1),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,7 +34,8 @@ class HomeBibliotecario extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('¿Cerrar sesión?'),
-                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  content:
+                      const Text('¿Estás seguro de que quieres cerrar sesión?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -53,83 +55,95 @@ class HomeBibliotecario extends StatelessWidget {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          // Tamaño del botón en proporción a la pantalla
-          double buttonWidth = constraints.maxWidth < 600
-              ? constraints.maxWidth * 0.8
-              : 220;
-          double buttonHeight = constraints.maxWidth < 600
-              ? 140
-              : 220;
-
-          return Column(
-            children: [
-              if (constraints.maxWidth > 600)
-                Container(height: 40, color: Colors.grey.shade400),
-
-              Expanded(
-                child: Center(
-                  child: Wrap(
-                    spacing: 30,
-                    runSpacing: 30,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _crearBoton(
-                          context,
-                          "Préstamos",
-                          Icons.assignment_return,
-                          const ListaPrestamosTab(),
-                          buttonWidth,
-                          buttonHeight),
-                      _crearBoton(
-                          context,
-                          "Devoluciones",
-                          Icons.assignment_turned_in,
-                          const ListaDevoluciones(),
-                          buttonWidth,
-                          buttonHeight),
-                    ],
-                  ),
-                ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Wrap(
+            spacing: 30,
+            runSpacing: 30,
+            alignment: WrapAlignment.center,
+            children: const [
+              BotonAnimado(
+                titulo: "Préstamos",
+                icono: Icons.assignment_return,
+                pagina: ListaPrestamosTab(),
               ),
-
-              if (constraints.maxWidth > 600)
-                Container(height: 40, color: Colors.grey.shade400),
+              BotonAnimado(
+                titulo: "Devoluciones",
+                icono: Icons.assignment_turned_in,
+                pagina: ListaDevoluciones(),
+              ),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }
+}
 
-  Widget _crearBoton(BuildContext context, String titulo, IconData icono,
-      Widget pagina, double width, double height) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+class BotonAnimado extends StatefulWidget {
+  final String titulo;
+  final IconData icono;
+  final Widget pagina;
+
+  const BotonAnimado({
+    Key? key,
+    required this.titulo,
+    required this.icono,
+    required this.pagina,
+  }) : super(key: key);
+
+  @override
+  State<BotonAnimado> createState() => _BotonAnimadoState();
+}
+
+class _BotonAnimadoState extends State<BotonAnimado> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedScale(
+        scale: _hover ? 1.06 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 220,
+          height: 220,
+          decoration: BoxDecoration(
+            color: _hover ? Colors.blue.shade800 : Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(2, 4),
+              ),
+            ],
           ),
-          elevation: 4,
-        ),
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => pagina));
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icono, size: width < 200 ? 40 : 65, color: Colors.white),
-            const SizedBox(height: 16),
-            Text(
-              titulo,
-              style: const TextStyle(fontSize: 20, color: Colors.white),
-              textAlign: TextAlign.center,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => widget.pagina),
+              );
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(widget.icono, size: 60, color: Colors.white),
+                const SizedBox(height: 14),
+                Text(
+                  widget.titulo,
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
