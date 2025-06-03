@@ -1,27 +1,31 @@
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:biblioteca_app/modelo/database/dao.dart';
 import 'package:flutter/rendering.dart';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:file_picker/file_picker.dart';
 
 class EstadisticaPrestamos extends StatefulWidget {
   const EstadisticaPrestamos({super.key});
 
   @override
-  State<EstadisticaPrestamos> createState() => _EstadisticaPrestamosState();
+  State<EstadisticaPrestamos> createState() => EstadisticaPrestamosState();
 }
 
-class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
+class EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
+  final GlobalKey _chartKey = GlobalKey();
+
   int _anio = DateTime.now().year;
   int _trimestre = 1;
   List<Map<String, dynamic>> _datos = [];
   int? _touchedGroupIndex;
   int? _touchedRodIndex;
-  final GlobalKey _chartKey = GlobalKey();
+
+  int get anio => _anio;
+  int get trimestre => _trimestre;
+  List<Map<String, dynamic>> get datos => _datos;
+  List<String> get carreras => _carreras;
+  List<String> get sexos => _sexos;
 
   @override
   void initState() {
@@ -30,46 +34,15 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
   }
 
   Future<void> _cargarDatos() async {
-    final datos = await Dao.prestamosPorTrimestreGeneroCarrera(
+    final datosCargados = await Dao.prestamosPorTrimestreGeneroCarrera(
       year: _anio,
       trimestre: _trimestre,
     );
     setState(() {
-      _datos = datos;
+      _datos = datosCargados;
       _touchedGroupIndex = null;
       _touchedRodIndex = null;
     });
-  }
-
-  Future<void> _descargarImagen() async {
-    try {
-      RenderRepaintBoundary boundary =
-          _chartKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-      String? outputFile = await FilePicker.platform.saveFile(
-        dialogTitle: 'Guardar imagen como',
-        fileName: 'estadistica_prestamos.png',
-        type: FileType.custom,
-        allowedExtensions: ['png'],
-      );
-
-      if (outputFile != null) {
-        final file = File(outputFile);
-        await file.writeAsBytes(pngBytes);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Imagen guardada en: $outputFile')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar la imagen: $e')),
-      );
-    }
   }
 
   List<String> get _carreras =>
@@ -123,15 +96,37 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
               color: colors[i % colors.length],
             ),
             const SizedBox(width: 4),
-            Text(sexos[i] == 'M'
-                ? 'Masculino'
-                : sexos[i] == 'F'
-                    ? 'Femenino'
-                    : sexos[i]),
+            Text(
+              sexos[i] == 'M'
+                  ? 'Masculino'
+                  : sexos[i] == 'F'
+                      ? 'Femenino'
+                      : sexos[i],
+            ),
           ],
         );
       }),
     );
+  }
+
+  /// Captura el gráfico como imagen PNG y devuelve un Uint8List.
+  Future<Uint8List?> capturarGraficoComoImagen() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _chartKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 20));
+        return capturarGraficoComoImagen();
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint("Error al capturar el gráfico: $e");
+      return null;
+    }
   }
 
   @override
@@ -162,10 +157,12 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                           return DropdownMenuItem(value: y, child: Text("$y"));
                         }),
                         onChanged: (v) {
-                          setState(() {
-                            _anio = v!;
-                            _cargarDatos();
-                          });
+                          if (v != null) {
+                            setState(() {
+                              _anio = v;
+                              _cargarDatos();
+                            });
+                          }
                         },
                       ),
                     ],
@@ -183,10 +180,12 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                           DropdownMenuItem(value: 4, child: Text("Oct-Dic")),
                         ],
                         onChanged: (v) {
-                          setState(() {
-                            _trimestre = v!;
-                            _cargarDatos();
-                          });
+                          if (v != null) {
+                            setState(() {
+                              _trimestre = v;
+                              _cargarDatos();
+                            });
+                          }
                         },
                       ),
                     ],
@@ -194,17 +193,6 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                 ],
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.download),
-                    label: const Text('Descargar imagen'),
-                    onPressed: _datos.isEmpty ? null : _descargarImagen,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               Expanded(
                 child: _datos.isEmpty
                     ? const Center(child: Text("No hay datos para este periodo."))
@@ -221,45 +209,43 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                                       axisNameWidget: const Text(
                                         'Distribución de Préstamos por Género y Carrera',
                                         style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                       axisNameSize: 32,
                                       sideTitles: SideTitles(
                                         showTitles: true,
-                                        reservedSize: 40,
-                                        interval: 1,
                                         getTitlesWidget: (value, meta) {
                                           if (value % 1 == 0) {
-                                            return Text(
-                                                value.toInt().toString());
+                                            return Text(value.toInt().toString());
                                           }
                                           return const SizedBox.shrink();
                                         },
+                                        reservedSize: 40,
                                       ),
                                     ),
                                     bottomTitles: AxisTitles(
                                       axisNameWidget: const Text(
                                         'Carreras',
                                         style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                       axisNameSize: 32,
                                       sideTitles: SideTitles(
                                         showTitles: true,
                                         getTitlesWidget: (value, meta) {
                                           final idx = value.toInt();
-                                          if (idx >= 0 &&
-                                              idx < carreras.length) {
+                                          if (idx >= 0 && idx < carreras.length) {
                                             return SideTitleWidget(
                                               axisSide: meta.axisSide,
                                               child: Text(
                                                 carreras[idx],
                                                 style: TextStyle(
-                                                  fontSize: screenWidth < 350
-                                                      ? 8
-                                                      : 10,
+                                                  fontSize:
+                                                      screenWidth < 350 ? 8 : 10,
                                                 ),
                                               ),
                                             );
@@ -281,7 +267,8 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                                     enabled: true,
                                     touchTooltipData: BarTouchTooltipData(
                                       tooltipBgColor: Colors.black87,
-                                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                      getTooltipItem:
+                                          (group, groupIndex, rod, rodIndex) {
                                         if (_touchedGroupIndex == groupIndex &&
                                             _touchedRodIndex == rodIndex) {
                                           final sexo = sexos[rodIndex];
@@ -298,10 +285,9 @@ class _EstadisticaPrestamosState extends State<EstadisticaPrestamos> {
                                     touchCallback: (event, response) {
                                       setState(() {
                                         if (event.isInterestedForInteractions &&
-                                            response != null &&
-                                            response.spot != null) {
+                                            response?.spot != null) {
                                           _touchedGroupIndex =
-                                              response.spot!.touchedBarGroupIndex;
+                                              response!.spot!.touchedBarGroupIndex;
                                           _touchedRodIndex =
                                               response.spot!.touchedRodDataIndex;
                                         } else {

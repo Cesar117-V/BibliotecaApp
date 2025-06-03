@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (seleccionado == 0) {
       // Admin
-      if (email == 'anet13@outlook.es' && password == 'Viri2152') {
+      if (email == 'ci@chilpancingo.tecnm.mx' && password == 'Viri2152') {
         SesionUsuario.nombre = 'Administrador';
         SesionUsuario.tipo = 'admin';
         SesionUsuario.correo = email;
